@@ -1,248 +1,252 @@
 /* public/style.css */
 
-/* =========================================================================
-   Базовые стили и переменные темы
-   ========================================================================= */
+/* --- 0. Базовые настройки и переменные темы --- */
 :root {
-    --bg-dark: #202225;
-    --bg-light: #F2F3F5;
-    --main-bg: #36393f;
-    --main-light: #ffffff;
-    --secondary-bg: #2f3136;
-    --secondary-light: #e3e5e8;
-    --accent-color: #7289da;
-    --text-color: #dcddde;
-    --text-dark: #2e3035;
-    --error-color: #f04747;
-    --online-color: #43b581;
-    --offline-color: #747f8d;
+    --bg-dark: #2f3136;
+    --bg-light: #f2f3f5;
+    --sidebar-dark: #202225;
+    --sidebar-light: #e3e5e8;
+    --main-bg-dark: #36393f;
+    --main-bg-light: #fff;
+    --text-primary-dark: #fff;
+    --text-primary-light: #000;
+    --text-secondary-dark: #b9bbbe;
+    --text-secondary-light: #72767d;
+    --accent-color: #5865f2;
+    --accent-hover: #4752c4;
+    --message-bg-dark: #32353b;
+    --message-bg-light: #f0f0f0;
+    --danger-color: #ed4245;
+    --border-color-dark: #2b2d31;
+    --border-color-light: #e0e0e0;
 }
 
-/* Dark Theme */
+/* Dark Theme (Default) */
 [data-theme="dark"] {
-    --bg-color: var(--bg-dark);
-    --sidebar-bg: var(--secondary-bg);
-    --content-bg: var(--main-bg);
-    --text: var(--text-color);
-    --input-bg: var(--secondary-bg);
-    --message-bg: var(--secondary-bg);
-    --message-out-bg: #40444b;
+    background-color: var(--bg-dark);
+    color: var(--text-primary-dark);
 }
 
 /* Light Theme */
 [data-theme="light"] {
-    --bg-color: var(--bg-light);
-    --sidebar-bg: var(--secondary-light);
-    --content-bg: var(--main-light);
-    --text: var(--text-dark);
-    --input-bg: var(--main-light);
-    --message-bg: var(--secondary-light);
-    --message-out-bg: #d4d7dc;
+    --bg-dark: var(--bg-light);
+    --sidebar-dark: var(--sidebar-light);
+    --main-bg-dark: var(--main-bg-light);
+    --text-primary-dark: var(--text-primary-light);
+    --text-secondary-dark: var(--text-secondary-light);
+    --message-bg-dark: var(--message-bg-light);
+    --border-color-dark: var(--border-color-light);
+
+    background-color: var(--bg-dark);
+    color: var(--text-primary-dark);
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Open Sans', sans-serif;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text);
-    transition: background-color 0.3s, color 0.3s;
     height: 100vh;
-    overflow: hidden;
-}
-
-/* =========================================================================
-   Auth Screen
-   ========================================================================= */
-#auth-screen {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+a {
+    text-decoration: none;
+    color: var(--text-primary-dark);
+}
+
+/* --- 1. Аутентификация --- */
+#auth-screen {
     height: 100vh;
-    background-color: var(--bg-color);
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-dark);
 }
 
 .auth-container {
-    background-color: var(--secondary-bg);
-    padding: 30px;
+    background-color: var(--main-bg-dark);
+    padding: 40px;
     border-radius: 8px;
-    width: 350px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    width: 350px;
+    text-align: center;
 }
 
 .auth-container h1 {
-    text-align: center;
     color: var(--accent-color);
     margin-bottom: 20px;
+    font-size: 28px;
 }
 
 .tabs {
     display: flex;
     margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color-dark);
 }
 
 .tabs button {
     flex-grow: 1;
     padding: 10px;
+    background: none;
     border: none;
-    background: transparent;
-    color: var(--text);
+    color: var(--text-secondary-dark);
     cursor: pointer;
+    font-size: 16px;
     border-bottom: 2px solid transparent;
-    transition: border-bottom 0.2s;
 }
 
 .tabs button.active {
-    border-bottom: 2px solid var(--accent-color);
-    font-weight: bold;
+    color: var(--text-primary-dark);
+    border-bottom-color: var(--accent-color);
 }
 
 #login-form, #register-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 input[type="text"], input[type="password"] {
-    padding: 10px;
-    border: 1px solid var(--secondary-light);
+    padding: 12px;
+    border: 1px solid var(--border-color-dark);
     border-radius: 4px;
-    background-color: var(--input-bg);
-    color: var(--text);
+    background-color: var(--message-bg-dark);
+    color: var(--text-primary-dark);
+    font-size: 16px;
 }
 
-button[type="submit"] {
-    padding: 10px;
+.auth-container button[type="submit"] {
+    padding: 12px;
     background-color: var(--accent-color);
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    font-size: 16px;
+    font-weight: bold;
 }
 
-button[type="submit"]:hover {
-    background-color: #677bc4;
+.auth-container button[type="submit"]:hover {
+    background-color: var(--accent-hover);
 }
 
 .avatar-label {
+    display: block;
     padding: 10px;
-    background-color: var(--secondary-bg);
-    color: var(--text);
-    border: 1px solid var(--secondary-light);
+    background-color: var(--border-color-dark);
+    color: var(--text-primary-dark);
     border-radius: 4px;
     cursor: pointer;
-    text-align: center;
+    font-size: 14px;
+    text-align: left;
 }
-
-#avatar-upload {
+.avatar-label input[type="file"] {
     display: none;
 }
 
-/* =========================================================================
-   App Screen Layout
-   ========================================================================= */
+
+/* --- 2. Основной Экран Приложения --- */
 #app-screen {
     display: flex;
-    height: 100%;
-    background-color: var(--content-bg);
+    height: 100vh;
+    width: 100vw;
+    max-width: 100%;
+    max-height: 100%;
+    background-color: var(--bg-dark);
 }
 
+/* 2.1 Сайдбар */
 .sidebar {
-    width: 300px;
-    background-color: var(--sidebar-bg);
+    width: 240px;
+    background-color: var(--sidebar-dark);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.main-content {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--content-bg);
-}
-
-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--content-bg);
-    z-index: 5;
-}
-
-header h2 {
-    font-size: 1.2em;
-}
-
-.chat-actions {
-    display: flex;
-    gap: 10px;
-}
-
-/* =========================================================================
-   Sidebar Content
-   ========================================================================= */
-.user-profile {
     padding: 10px;
-    background-color: var(--main-bg);
+    border-right: 1px solid var(--border-color-dark);
+}
+
+.user-profile {
     display: flex;
     align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    padding: 10px 0;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color-dark);
 }
 
 .user-profile img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    margin-right: 10px;
     object-fit: cover;
+}
+
+.user-profile span {
+    font-weight: bold;
+    flex-grow: 1;
 }
 
 .sidebar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 15px;
+    padding: 10px 0;
+}
+
+.sidebar-header h2 {
+    font-size: 16px;
+    color: var(--text-secondary-dark);
 }
 
 .friends-list {
     flex-grow: 1;
     overflow-y: auto;
-    padding: 10px 0;
+    padding: 5px 0;
 }
 
 .friend-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 15px;
+    padding: 10px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.1s;
-    border-radius: 5px;
-    margin: 2px 10px;
+    margin-bottom: 5px;
+    color: var(--text-secondary-dark);
 }
 
-.friend-item:hover, .friend-item.active {
-    background-color: #40444b;
+.friend-item.active {
+    background-color: var(--message-bg-dark);
+    color: var(--text-primary-dark);
+}
+
+.friend-item:hover {
+    background-color: rgba(var(--accent-color), 0.1);
+    color: var(--text-primary-dark);
 }
 
 .friend-item img {
     width: 30px;
     height: 30px;
     border-radius: 50%;
+    margin-right: 10px;
     object-fit: cover;
 }
 
+.friend-item .special-border {
+    border: 2px solid gold;
+}
+
 .sidebar-footer {
-    padding: 10px;
-    border-top: 1px solid rgba(0, 0, 0, 0.2);
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color-dark);
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -251,162 +255,223 @@ header h2 {
 .sidebar-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border: none;
-    background: transparent;
-    color: var(--text);
-    text-decoration: none;
+    padding: 10px;
     border-radius: 4px;
-    transition: background-color 0.1s;
+    background-color: var(--message-bg-dark);
+    color: var(--text-secondary-dark);
     cursor: pointer;
+    font-size: 14px;
+    border: none;
 }
 
 .sidebar-btn:hover {
-    background-color: #40444b;
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.sidebar-btn .material-icons {
+    margin-right: 8px;
+    font-size: 20px;
 }
 
 .logout-btn {
-    color: var(--error-color);
+    background-color: var(--danger-color);
+    color: white;
 }
 
-/* =========================================================================
-   Chat Content
-   ========================================================================= */
+/* 2.2 Основной контент (Чат) */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--main-bg-dark);
+}
+
+.main-content header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--main-bg-dark); /* Обеспечить фон для липкого заголовка */
+}
+
+.chat-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .messages-container {
     flex-grow: 1;
     padding: 20px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
-.chat-input {
-    padding: 15px 20px;
-    display: flex;
-    gap: 10px;
-    background-color: var(--content-bg);
-}
-
-.chat-input input[type="text"] {
-    flex-grow: 1;
-    padding: 12px;
-}
-
-.chat-input button {
-    padding: 12px 20px;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-/* --- Message Bubbles --- */
+/* Стили сообщения */
 .message {
     display: flex;
+    margin-bottom: 15px;
     align-items: flex-start;
-    gap: 10px;
 }
 
 .message img {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+    margin-right: 10px;
     object-fit: cover;
     flex-shrink: 0;
 }
 
 .message .content {
-    display: flex;
-    flex-direction: column;
-    padding: 10px 15px;
+    padding: 8px 15px;
     border-radius: 8px;
     max-width: 60%;
+    position: relative;
     word-wrap: break-word;
 }
 
 .message .author {
+    font-size: 12px;
     font-weight: bold;
-    font-size: 0.9em;
-    margin-bottom: 3px;
+    color: var(--accent-color);
+    display: block;
+    margin-bottom: 2px;
+}
+
+.incoming .content {
+    background-color: var(--message-bg-dark);
+    color: var(--text-primary-dark);
+    border-bottom-left-radius: 2px;
+}
+
+.outgoing {
+    justify-content: flex-end;
+}
+
+.outgoing img {
+    order: 2;
+    margin-left: 10px;
+    margin-right: 0;
+}
+
+.outgoing .content {
+    background-color: var(--accent-color);
+    color: white;
+    order: 1;
+    border-bottom-right-radius: 2px;
+}
+
+/* Медиа в сообщениях */
+.media-attachment img,
+.media-attachment video,
+.media-attachment audio {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 4px;
+    display: block;
+    margin-top: 5px;
+}
+
+.media-attachment audio {
+    max-width: 300px;
+}
+
+.media-attachment .file-info {
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.media-attachment .file-info .material-icons {
+    margin-right: 5px;
+    font-size: 18px;
+}
+
+
+/* 2.3 Инпут чата */
+.chat-input {
+    display: flex;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-color-dark);
+    background-color: var(--main-bg-dark);
+    gap: 10px;
+}
+
+.chat-input input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid var(--border-color-dark);
+    border-radius: 22px;
+    background-color: var(--message-bg-dark);
+    color: var(--text-primary-dark);
+    font-size: 16px;
+    outline: none;
+}
+
+.chat-input button {
+    padding: 10px 20px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 22px;
+    cursor: pointer;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.chat-input button:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Общая стилизация кнопок с иконками */
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary-dark);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background-color: var(--message-bg-dark);
+    color: var(--text-primary-dark);
+}
+
+.icon-btn .material-icons {
+    font-size: 24px;
+}
+
+.call-btn .material-icons {
     color: var(--accent-color);
 }
 
-.message.incoming .content {
-    background-color: var(--message-bg);
-}
-
-.message.outgoing {
-    align-self: flex-end;
-    flex-direction: row-reverse;
-}
-
-.message.outgoing .content {
-    background-color: var(--message-out-bg);
-    align-items: flex-end;
-}
-
-.message.outgoing .author {
-    display: none; /* Скрываем имя в исходящих */
-}
-
-/* =========================================================================
-   File/Media Display (НОВОЕ ДЛЯ ФАЙЛОВ)
-   ========================================================================= */
-
+/* File Input Wrapper (для кнопки вложения) */
 .file-input-wrapper {
     position: relative;
-    display: inline-block;
-}
-
-.file-input-wrapper input[type=file] {
-    opacity: 0;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-}
-
-.file-input-wrapper .icon-btn {
-    cursor: pointer;
-}
-
-.media-attachment {
-    margin-top: 5px;
-    max-width: 300px;
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: #303030;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.media-attachment img, .media-attachment video {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    object-fit: contain;
-}
-
-.file-info {
-    padding: 10px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: var(--text-color);
 }
 
-.file-info span {
-    font-size: 0.9em;
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
 }
 
-/* =========================================================================
-   Modals
-   ========================================================================= */
+/* --- 3. Модальные окна --- */
 .modal {
     position: fixed;
     top: 0;
@@ -417,17 +482,22 @@ header h2 {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000;
 }
 
 .modal-content {
-    background-color: var(--secondary-bg);
+    background-color: var(--main-bg-dark);
     padding: 30px;
     border-radius: 8px;
     width: 400px;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
     position: relative;
+}
+
+.modal-content h2 {
+    margin-bottom: 20px;
+    color: var(--text-primary-dark);
 }
 
 .close-btn {
@@ -436,21 +506,41 @@ header h2 {
     right: 10px;
     background: none;
     border: none;
+    color: var(--text-secondary-dark);
     cursor: pointer;
+    padding: 5px;
 }
 
-.close-btn svg {
-    width: 20px;
-    height: 20px;
-    fill: var(--text);
+.close-btn:hover {
+    color: var(--text-primary-dark);
 }
 
+.close-btn .material-icons {
+    font-size: 24px;
+}
+
+/* Настройки темы */
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid #40444b;
+    border-bottom: 1px solid var(--border-color-dark);
+}
+
+.setting-item button {
+    padding: 8px 15px;
+    border-radius: 4px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Запросы в друзья */
+#friend-req-input {
+    width: 100%;
+    margin-top: 10px;
 }
 
 .request-item {
@@ -458,95 +548,124 @@ header h2 {
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid #40444b;
+    border-bottom: 1px solid var(--border-color-dark);
 }
 
-.request-item div {
-    display: flex;
-    gap: 5px;
+.request-item span {
+    font-weight: bold;
 }
 
 .accept-btn {
-    background-color: var(--online-color);
+    background-color: #43b581; /* Discord Green */
     color: white;
-    border: none;
     padding: 5px 10px;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
+    margin-left: 10px;
 }
 
 .reject-btn {
-    background-color: var(--error-color);
+    background-color: var(--danger-color);
     color: white;
-    border: none;
     padding: 5px 10px;
+    border: none;
     border-radius: 4px;
     cursor: pointer;
+    margin-left: 5px;
 }
 
-
-/* =========================================================================
-   SVG Icon Styling & Special Border
-   ========================================================================= */
-.icon-btn svg {
-    fill: currentColor; 
-    width: 24px;
-    height: 24px;
-    vertical-align: middle;
+.no-requests {
+    text-align: center;
+    color: var(--text-secondary-dark);
+    padding: 20px;
 }
 
-.icon-btn:hover svg {
-    opacity: 0.8;
-}
-
-/* Специальная обводка для Today_Idk */
-.special-border {
-    border: 3px solid #ff7700; 
-    border-radius: 50%;
-    padding: 1px; 
-    transition: border 0.3s ease; 
-}
-
-/* =========================================================================
-   WebRTC UI (Call Overlay)
-   ========================================================================= */
-.call-overlay {
+/* Модальные окна звонков (Incoming/Awaiting) */
+.modal-call-status {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.9);
-    z-index: 90;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    text-align: center;
+}
+
+.modal-call-status .modal-content {
+    width: 300px;
+    padding: 40px;
+}
+
+.modal-call-status h3 {
+    margin-bottom: 20px;
+}
+
+.modal-call-status .call-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.modal-call-status .call-controls button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+.modal-call-status .call-controls button .material-icons {
+    font-size: 32px;
+}
+
+
+/* --- 4. WebRTC UI --- */
+.call-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--sidebar-dark);
     display: flex;
     flex-direction: column;
+    z-index: 999;
 }
 
 .call-header {
     padding: 15px;
     text-align: center;
-    font-size: 1.1em;
-    color: white;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color-dark);
 }
 
 .video-grid {
     flex-grow: 1;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 10px;
     padding: 10px;
+    overflow: hidden;
 }
 
 .video-container {
-    background-color: #1a1a1a;
+    background-color: var(--message-bg-dark);
     border-radius: 8px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    flex-basis: 45%; /* Для десктопа */
-    aspect-ratio: 16/9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .video-container video {
@@ -558,191 +677,90 @@ header h2 {
 
 .video-placeholder {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #aaa;
-    font-size: 1.2em;
-    background-color: #2c2f33;
+    color: var(--text-secondary-dark);
+    font-size: 1.5em;
+    pointer-events: none;
+    opacity: 0.5;
 }
 
-/* Локальное видео меньше и в углу */
-.video-container.local {
+/* Локальное видео (наложение) */
+.local {
     position: absolute;
-    bottom: 100px; /* Над контролами */
+    top: 20px;
     right: 20px;
-    width: 200px;
+    width: 180px;
     height: 120px;
     z-index: 10;
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.video-container.remote, .video-container.screen-share {
-    flex-basis: 45%; 
-    max-width: 800px;
-    min-width: 300px;
-}
-
-.call-controls {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-    padding: 20px;
-    background-color: #111111;
-}
-
-.control-btn {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: none;
-    background-color: #40444b;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.2s;
-}
-
-.control-btn:hover {
-    background-color: #5865f2;
-}
-
-.control-btn svg {
-    fill: white;
-    width: 30px;
-    height: 30px;
-}
-
-.control-btn.off {
-    background-color: var(--error-color);
-}
-
-.control-btn.off svg {
-    fill: white;
-}
-
-.end-call-btn {
-    background-color: var(--error-color);
-}
-
-.end-call-btn:hover {
-    background-color: #c43737;
-}
-
-.modal-call-status {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 101;
-}
-
-.modal-call-status .modal-content {
-    text-align: center;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.modal-call-status .call-controls {
-    background: none;
+.local .video-placeholder {
+    display: none;
 }
 
 /* Индикатор демонстрации экрана */
-.screen-indicator {
+#local-screen-indicator {
     position: absolute;
-    top: 10px; 
-    left: 10px;
-    background: #5865f2;
+    bottom: 5px;
+    left: 5px;
+    background-color: var(--danger-color);
     color: white;
-    padding: 5px 10px;
+    padding: 3px 6px;
     border-radius: 4px;
-    font-size: 0.9em;
+    font-size: 0.7em;
     font-weight: bold;
+}
+
+/* Панель управления звонком */
+.call-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    background-color: var(--sidebar-dark);
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--message-bg-dark);
+    border: none;
+    color: var(--text-primary-dark);
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 5px;
-    z-index: 10;
+    justify-content: center;
 }
 
-.live-tag {
+.control-btn .material-icons {
+    font-size: 28px;
+}
+
+.control-btn:hover {
+    background-color: var(--border-color-dark);
+}
+
+.control-btn.off {
+    background-color: var(--danger-color);
     color: white;
-    background-color: var(--error-color);
-    padding: 2px 6px;
-    border-radius: 4px;
 }
 
-/* =========================================================================
-   MOBILE ADAPTATION (ГУИ ЗВОНКА НА МОБИЛЕ)
-   ========================================================================= */
+.control-btn.off:hover {
+    background-color: #a12b2e;
+}
 
-@media (max-width: 768px) {
-    .sidebar {
-        width: 100%;
-        position: fixed;
-        height: 100%;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease-in-out;
-        z-index: 50;
-    }
+.end-call-btn {
+    background-color: var(--danger-color);
+    color: white;
+}
 
-    /* Адаптация основного контента при открытии/закрытии сайдбара */
-    .main-content {
-        margin-left: 0;
-    }
+.end-call-btn:hover {
+    background-color: #a12b2e;
+}
 
-    /* Мобильный вид WebRTC */
-    .video-grid {
-        flex-direction: column;
-        gap: 5px;
-        padding: 5px;
-    }
-
-    .video-container {
-        flex-basis: auto;
-        width: 100%;
-        max-width: none;
-    }
-
-    .video-container.local {
-        position: static; 
-        width: 100px;
-        height: 75px;
-        margin: 5px auto;
-        order: 10; /* Размещаем внизу */
-    }
-    
-    .video-container.remote, .video-container.screen-share {
-        flex-basis: auto;
-        order: 1; /* Главное видео сверху */
-        flex-grow: 1;
-    }
-
-    .call-controls {
-        padding: 10px;
-        gap: 15px;
-    }
-
-    .control-btn {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .chat-input {
-        padding: 10px;
-    }
-
-    .chat-input button {
-        padding: 10px 15px;
-    }
+.control-btn.active {
+    background-color: var(--accent-color);
+    color: white;
 }

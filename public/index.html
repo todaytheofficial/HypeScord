@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hypescord Messenger</title>
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -41,14 +44,14 @@
                 <img id="current-user-avatar" src="" alt="Avatar">
                 <span id="current-username"></span>
                 <button class="icon-btn" onclick="toggleSettings()">
-                    <svg class="icon-cog" viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm0 2a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11zm9.46 2.87-2.34-1.46c-.63.48-1.34.82-2.1.99l-.33 2.45h-4.38l-.33-2.45c-.76-.17-1.47-.51-2.1-.99L2.54 17.37l-1.07-1.06 1.6-2.77c.32-.56.45-1.19.45-1.84s-.13-1.28-.45-1.84L1.47 7.69l1.07-1.06 2.34 1.46c.63-.48 1.34-.82 2.1-.99L7.38 4.65h4.38l.33 2.45c.76.17 1.47.51 2.1.99l2.34-1.46 1.07 1.06-1.6 2.77c-.32.56-.45 1.19-.45 1.84s.13 1.28.45 1.84l1.6 2.77-1.07 1.06-2.34-1.46c-.63.48-1.34.82-2.1.99l-.33 2.45h-4.38l-.33-2.45c-.76-.17-1.47-.51-2.1-.99L5.385 16.615z"></path></svg>
+                    <i class="material-icons">settings</i> 
                 </button>
             </div>
 
             <div class="sidebar-header">
                 <h2>Друзья</h2>
                 <button class="icon-btn" onclick="toggleRequestModal()">
-                    <svg class="icon-users" viewBox="0 0 24 24"><path d="M12.016 11.514c.264-.523.585-1.01.956-1.442C13.568 9.25 14.28 8.65 15 8c-.68-.65-1.392-1.25-2.028-1.922-.371-.432-.692-.919-.956-1.442-.264-.523-.483-1.082-.656-1.674C11.192 2.378 11 1.748 11 1h2c0 .748-.192 1.378-.544 1.962-.173.592-.392 1.151-.656 1.674-.264.523-.585 1.01-.956 1.442C10.432 7.25 9.72 7.85 9 8c.68.65 1.392 1.25 2.028 1.922.371.432.692.919.956 1.442.264.523.483 1.082.656 1.674C12.808 15.622 13 16.252 13 17h-2c0-.748.192-1.378.544-1.962.173-.592.392-1.151.656-1.674zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM5.385 16.615l-1.06-1.06 1.6-2.77C6.24 12.24 6.375 11.61 6.375 10.965S6.24 9.7 5.865 9.065L4.325 6.295l1.06-1.06 2.34 1.46c.63-.48 1.34-.82 2.1-.99L10.15 4.65h4.38l.33 2.45c.76.17 1.47.51 2.1.99l2.34-1.46 1.06 1.06-1.6 2.77c-.375.645-.51 1.275-.51 1.92s.135 1.275.51 1.92l1.6 2.77-1.06 1.06-2.34-1.46c-.63.48-1.34.82-2.1.99l-.33 2.45h-4.38l-.33-2.45c-.76-.17-1.47-.51-2.1-.99L5.385 16.615z"/></svg>
+                    <i class="material-icons">group_add</i> 
                 </button>
             </div>
             
@@ -57,7 +60,7 @@
             
             <div class="sidebar-footer">
                  <button class="sidebar-btn" onclick="openChat('general-demo')">
-                    <svg class="icon-chat" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <i class="material-icons">forum</i>
                     <span>#general-demo</span>
                 </button>
                 <a href="/logout" class="sidebar-btn logout-btn">Выход</a>
@@ -69,7 +72,7 @@
                 <h2 id="chat-with-name">#general-demo</h2>
                 <div class="chat-actions">
                     <button id="call-btn" class="icon-btn call-btn" onclick="startCall()" style="display: none;">
-                        <svg class="icon-phone" viewBox="0 0 24 24"><path d="M16 3H8c-1.1 0-1.99.9-1.99 2L6 19c0 1.1.89 2 1.99 2H16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2.5 16h-3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h3c.28 0 .5.22.5.5s-.22.5-.5.5zm.5-4H9V8h6v7z"/></svg>
+                         <i class="material-icons">phone</i> 
                     </button>
                 </div>
             </header>
@@ -80,12 +83,12 @@
             <div class="chat-input">
                 <div class="file-input-wrapper">
                     <button class="icon-btn">
-                        <svg class="icon-attachment" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V6h-1.5z"/></svg>
+                        <i class="material-icons">attachment</i> 
                     </button>
                     <input type="file" id="file-input" onchange="sendFile(this.files)" accept="image/jpeg,image/png,audio/mp3,video/mp4">
                 </div>
                 
-                <input type="text" id="msg-input" placeholder="Написать сообщение...">
+                <input type="text" id="msg-input" placeholder="Написать сообщение..." onkeydown="if(event.key==='Enter') sendMessage()">
                 <button onclick="sendMessage()">Отправить</button>
             </div>
         </div>
@@ -94,7 +97,7 @@
     
     <div id="settings-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <button class="close-btn" onclick="toggleSettings()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            <button class="close-btn" onclick="toggleSettings()"><i class="material-icons">close</i></button>
             <h2>Настройки</h2>
             
             <div class="setting-item">
@@ -110,7 +113,7 @@
     
     <div id="requests-modal" class="modal" style="display: none;">
         <div class="modal-content">
-            <button class="close-btn" onclick="toggleRequestModal()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            <button class="close-btn" onclick="toggleRequestModal()"><i class="material-icons">close</i></button>
             <h2>Запросы в друзья</h2>
             <div id="friend-requests-list">
                 </div>
@@ -119,7 +122,7 @@
             
             <h3>Отправить запрос</h3>
             <input type="text" id="friend-req-input" placeholder="Имя пользователя">
-            <button class="accept-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 10px;">Отправить</lbutton>
+            <button class="accept-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 10px;">Отправить</button>
         </div>
     </div>
     
@@ -128,10 +131,10 @@
             <h3>Входящий звонок от <span id="caller-name">...</span></h3>
             <div class="call-controls">
                 <button onclick="answerCall()" class="accept-btn">
-                     <svg class="icon-video" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                     <i class="material-icons">video_call</i>
                 </button>
                 <button onclick="rejectCall()" class="reject-btn">
-                     <svg class="icon-phone-end" viewBox="0 0 24 24"><path d="M12 9c-1.39 0-2.78.33-4.08 1.05l-2.07-2.07c1.47-.79 3.09-1.28 4.65-1.28 1.56 0 3.02.42 4.31 1.25l-2.12 2.12c-.79-.38-1.63-.61-2.73-.61zm-4 7c1.39 0 2.78-.33 4.08-1.05l2.07 2.07c-1.47.79-3.09 1.28-4.65 1.28-1.56 0-3.02-.42-4.31-1.25l2.12-2.12c.79.38 1.63.61 2.73.61zm4-3c-1.11 0-2-.89-2-2s.89-2 2-2 2 .89 2 2-.89 2-2 2z"/></svg>
+                     <i class="material-icons">call_end</i>
                 </button>
             </div>
         </div>
@@ -142,7 +145,7 @@
             <h3>📞 Вызов: <span id="calling-name">...</span></h3>
             <p>Ожидание ответа...</p>
             <button onclick="endCall()" class="reject-btn">
-                <svg class="icon-phone-end" viewBox="0 0 24 24"><path d="M12 9c-1.39 0-2.78.33-4.08 1.05l-2.07-2.07c1.47-.79 3.09-1.28 4.65-1.28 1.56 0 3.02.42 4.31 1.25l-2.12 2.12c-.79-.38-1.63-.61-2.73-.61zm-4 7c1.39 0 2.78-.33 4.08-1.05l2.07 2.07c-1.47.79-3.09 1.28-4.65 1.28-1.56 0-3.02-.42-4.31-1.25l2.12-2.12c.79.38 1.63.61 2.73.61zm4-3c-1.11 0-2-.89-2-2s.89-2 2-2 2 .89 2 2-.89 2-2 2z"/></svg>
+                <i class="material-icons">call_end</i>
             </button>
         </div>
     </div>
@@ -174,19 +177,19 @@
 
         <div class="call-controls">
             <button id="mic-toggle" class="control-btn" onclick="toggleMic()">
-                <svg class="icon-mic" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.2-3c0 2.68-2.07 4.87-4.7 5.16V19h2c.55 0 1 .45 1 1s-.45 1-1 1h-4c-.55 0-1-.45-1-1s.45-1 1-1h2v-2.84c-2.63-.29-4.7-2.48-4.7-5.16H5c0 3.41 2.72 6.23 6 6.72V22h2v-4.28c3.28-.49 6-3.31 6-6.72h-1.8z"/></svg>
+                <i class="material-icons">mic</i>
             </button>
 
             <button id="camera-toggle" class="control-btn" onclick="toggleCamera()">
-                <svg class="icon-video" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                <i class="material-icons">videocam</i>
             </button>
 
             <button id="screen-share-toggle" class="control-btn" onclick="toggleScreenShare()">
-                <svg class="icon-screen-share" viewBox="0 0 24 24"><path d="M18 10V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h13c.55 0 1-.45 1-1v-3l4 4V6l-4 4zM16 16H5V8h11v8z"/></svg>
+                <i class="material-icons">screen_share</i>
             </button>
 
             <button class="control-btn end-call-btn" onclick="endCall()">
-                <svg class="icon-phone-end" viewBox="0 0 24 24"><path d="M12 9c-1.39 0-2.78.33-4.08 1.05l-2.07-2.07c1.47-.79 3.09-1.28 4.65-1.28 1.56 0 3.02.42 4.31 1.25l-2.12 2.12c-.79-.38-1.63-.61-2.73-.61zm-4 7c1.39 0 2.78-.33 4.08-1.05l2.07 2.07c-1.47.79-3.09 1.28-4.65 1.28-1.56 0-3.02-.42-4.31-1.25l2.12-2.12c.79.38 1.63.61 2.73.61zm4-3c-1.11 0-2-.89-2-2s.89-2 2-2 2 .89 2 2-.89 2-2 2z"/></svg>
+                <i class="material-icons">call_end</i>
             </button>
         </div>
     </div>

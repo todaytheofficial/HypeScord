@@ -1,4 +1,4 @@
-// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с файлами, WebRTC и исправлением UI ошибок)
+// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с Material Icons, исправленной логикой звонков и файлов)
 
 // Глобальные переменные
 var currentUser = null; 
@@ -11,6 +11,7 @@ var screenShareStream = null;
 var isSharingScreen = false;
 var friendRequests = []; 
 var isAwaitingAnswer = false; 
+var incomingSdpOffer = null; // Переменная для хранения входящего SDP
 
 // WebRTC Configuration
 const ICE_SERVERS = {
@@ -43,7 +44,6 @@ window.onload = async () => {
         initApp();
         authScreen.style.display = 'none';
     } else {
-        // Ошибка 401: Пользователь не аутентифицирован - показываем экран входа
         authScreen.style.display = 'flex';
         showAuth('login'); 
     }
@@ -178,7 +178,7 @@ window.openChat = function(username) {
     }
 }
 
-// --- Theme & Settings Logic (Исправление ошибки client.js:194) ---
+// --- Theme & Settings Logic ---
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
@@ -187,7 +187,6 @@ function applyInitialTheme() {
 
 function updateThemeUI(theme) {
     const isDark = theme === 'dark';
-    // Проверка на наличие элементов, чтобы избежать TypeError: Cannot set properties of null
     const themeNameEl = document.getElementById('current-theme-name');
     const themeBtnEl = document.getElementById('theme-btn');
     
@@ -217,7 +216,7 @@ window.toggleSettings = function() {
 }
 
 // =========================================================================
-// 2. Messaging & File Logic
+// 2. Messaging & File Logic (ИСПРАВЛЕНА ЛОГИКА ФАЙЛОВ)
 // =========================================================================
 
 window.sendMessage = function() {
@@ -228,6 +227,7 @@ window.sendMessage = function() {
     if (currentChatUser === 'general-demo') {
         window.socket.emit('demo_message', { message: msg });
     } else if (currentChatUser) {
+        // Отправляем только текстовое сообщение
         window.socket.emit('chat_message', { toUser: currentChatUser, message: msg });
     }
     input.value = '';
@@ -248,13 +248,17 @@ window.sendFile = async (files) => {
     reader.onload = function(e) {
         const fileData = e.target.result;
         
+        // Отправляем ТОЛЬКО объект file. 
+        // Если на сервере поле message обязательно, нужно проверить серверный код.
         window.socket.emit('chat_message', { 
             toUser: currentChatUser, 
             file: {
                 data: fileData,
                 name: file.name,
                 type: file.type
-            }
+            },
+            // Добавляем пустую строку, чтобы предотвратить ошибку NOT NULL
+            message: '' 
         });
         
         document.getElementById('file-input').value = '';
@@ -290,7 +294,7 @@ function displayMessage(data, isDemo = false) {
             const tag = mimeType === 'video' ? 'video' : 'audio';
             mediaTag = `<${tag} controls src="${file.data}"></${tag}>`;
         } else {
-            mediaTag = `<div class="file-info"><svg class="icon-attachment" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V6h-1.5z"/></svg><span>${file.name}</span></div>`;
+            mediaTag = `<div class="file-info"><i class="material-icons">attachment</i><span>${file.name}</span></div>`;
         }
 
         contentHtml = `<div class="media-attachment">${mediaTag}</div>`;
@@ -440,14 +444,16 @@ async function setupPeerConnection(targetUser) {
     };
 }
 
+// ИСПРАВЛЕНА ЛОГИКА ПРИГЛАШЕНИЯ
 function handleSdpOffer(data) {
-    if (!peerConnection && !isAwaitingAnswer) {
+    if (!isCallActive && !isAwaitingAnswer) {
         callPartner = data.from;
         document.getElementById('caller-name').innerText = data.from;
         document.getElementById('incoming-call-box').style.display = 'flex';
+        window.incomingSdpOffer = data;
     }
     
-    if (peerConnection && !isAwaitingAnswer) { 
+    if (peerConnection && isCallActive) { 
         answerCall(data);
     }
 }
@@ -479,10 +485,15 @@ function handleCallEnd(data) {
     }
 }
 
-window.answerCall = async function(data) {
+// ИСПРАВЛЕНА ЛОГИКА ОТВЕТА
+window.answerCall = async function() {
+    const data = window.incomingSdpOffer;
+    if (!data || isCallActive) return; 
+
     document.getElementById('incoming-call-box').style.display = 'none';
     isCallActive = true; 
     const targetUser = callPartner; 
+    window.incomingSdpOffer = null;
 
     if (!localStream) {
         try {
@@ -502,7 +513,6 @@ window.answerCall = async function(data) {
         await setupPeerConnection(targetUser);
     }
     
-    // Принимаем offer
     if (data && data.sdp) {
          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
     }
@@ -561,6 +571,7 @@ window.rejectCall = function() {
         window.socket.emit('call_end', callPartner); 
     }
     callPartner = null;
+    incomingSdpOffer = null;
 }
 
 
