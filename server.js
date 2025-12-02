@@ -9,6 +9,17 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
 const multer = require('multer'); // Для обработки аватаров
+const fs = require('fs'); // Добавляем модуль для работы с файловой системой
+const path = require('path');
+
+// --- Создание папки для аватаров, если она не существует ---
+const AVATARS_DIR = path.join(__dirname, 'public', 'avatars');
+
+if (!fs.existsSync(AVATARS_DIR)) {
+    fs.mkdirSync(AVATARS_DIR, { recursive: true });
+    console.log(`Папка для аватаров (${AVATARS_DIR}) создана.`);
+}
+// -----------------------------------------------------------
 
 const app = express();
 const server = http.createServer(app);
