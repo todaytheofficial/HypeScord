@@ -1,5 +1,17 @@
 // server.js (Полная реализация с SQLite)
 
+const fs = require('fs'); // Добавьте, если нужно для создания папки
+const path = require('path'); // ОДНО ОБЪЯВЛЕНИЕ path!
+
+// --- Проверка и создание папки для аватаров (если включено) ---
+const AVATARS_DIR = path.join(__dirname, 'public', 'avatars');
+
+if (!fs.existsSync(AVATARS_DIR)) {
+    fs.mkdirSync(AVATARS_DIR, { recursive: true });
+    console.log(`Папка для аватаров (${AVATARS_DIR}) создана.`);
+}
+// -----------------------------------------------------------
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -7,18 +19,7 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const path = require('path');
-const multer = require('multer'); // Для обработки аватаров
-const fs = require('fs'); // Добавляем модуль для работы с файловой системой
-const path = require('path');
 
-// --- Создание папки для аватаров, если она не существует ---
-const AVATARS_DIR = path.join(__dirname, 'public', 'avatars');
-
-if (!fs.existsSync(AVATARS_DIR)) {
-    fs.mkdirSync(AVATARS_DIR, { recursive: true });
-    console.log(`Папка для аватаров (${AVATARS_DIR}) создана.`);
-}
 // -----------------------------------------------------------
 
 const app = express();
