@@ -60,10 +60,7 @@ input, button, .cta-btn, .file-upload {
     outline: none;
 }
 img { object-fit: cover; }
-.neon-glow {
-    /* Удален неоновый эффект по запросу пользователя */
-    text-shadow: none; 
-}
+
 
 /* =========================================================================
    3. Auth Screen
@@ -148,12 +145,22 @@ input:focus {
     border-top: 1px solid var(--border-color);
 }
 .user-panel img { width: 32px; height: 32px; border-radius: 50%; }
+.user-panel .settings-btn { /* Кнопки настроек и запросов */
+    width: 32px; height: 32px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+.user-panel .settings-btn:hover { 
+    background: var(--accent-secondary);
+    color: var(--text-color); 
+}
 .username { font-weight: 600; font-size: 13px; }
 .status { font-size: 11px; color: var(--success-color); }
 .settings-btn { 
-    background: none; border: none; color: var(--text-secondary); cursor: pointer; margin-left: auto; padding: 5px; 
+    background: none; border: none; color: var(--text-secondary); cursor: pointer; margin-left: 4px; padding: 5px; 
 }
-.settings-btn:hover { color: var(--text-color); }
 
 
 /* =========================================================================
@@ -208,6 +215,45 @@ input:focus {
     text-align: center; border: 1px solid var(--error-color); border-radius: 4px;
 }
 
+/* Стили для списка запросов */
+#friend-requests-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.request-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: var(--bg-panel);
+    border-radius: 4px;
+}
+.request-item span {
+    font-weight: 600;
+}
+.request-item button {
+    padding: 6px 10px;
+    margin-left: 8px;
+    font-size: 13px;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+.request-item .accept-btn {
+    background: var(--success-color);
+}
+.request-item .reject-btn {
+    background: var(--error-color);
+}
+.no-requests {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
 
 /* =========================================================================
    7. WebRTC Call UI
@@ -224,7 +270,7 @@ input:focus {
 #remote-video {
     width: 60vw; height: 50vh; max-width: 1200px;
     background: black; margin: 10px 0; border: 3px solid var(--accent-primary);
-    object-fit: contain; /* Чтобы видео помещалось целиком */
+    object-fit: contain;
 }
 #local-video {
     position: absolute; bottom: 90px; right: 20px; width: 180px; height: 120px; 
@@ -244,16 +290,13 @@ input:focus {
 }
 #call-controls button svg { width: 24px; height: 24px; }
 
-/* Кнопка "Завершить" */
 #end-call-btn { 
     background: var(--error-color); color: white; 
 }
-/* Активная демонстрация экрана */
 #screen-share-toggle.active { 
     background: var(--success-color); color: white; 
 }
 
-/* Состояние "выключено" для кнопок медиа (Mic/Camera) */
 #call-controls button.off {
     background: var(--accent-secondary); 
     color: var(--text-secondary);

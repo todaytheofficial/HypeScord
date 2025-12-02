@@ -9,6 +9,7 @@ var localStream = null;
 var peerConnection = null;
 var screenShareStream = null;
 var isSharingScreen = false;
+var friendRequests = []; // Массив для хранения входящих запросов
 
 // WebRTC Configuration
 const ICE_SERVERS = {
@@ -18,8 +19,6 @@ const ICE_SERVERS = {
 // =========================================================================
 // 1. UI Initialization & Theme Logic
 // =========================================================================
-
-// ... (showAuth, initApp, addFriendToUI, openChat остаются без изменений) ...
 
 window.showAuth = (type) => {
     const loginForm = document.getElementById('login-form');
@@ -36,7 +35,7 @@ window.onload = async () => {
     const res = await fetch('/me');
     const authScreen = document.getElementById('auth-screen');
     
-    // Инициализация темы при загрузке
+    // Инициализация темы
     applyInitialTheme();
 
     if (res.ok) {
@@ -56,7 +55,7 @@ function initApp() {
     
     const friendsList = document.getElementById('friends-list');
     friendsList.innerHTML = ''; 
-    addFriendToUI('TestUser'); 
+    addFriendToUI('Вася Пупкин'); 
     
     openChat('general-demo'); 
 }
@@ -122,8 +121,6 @@ window.toggleTheme = function() {
 // 2. Messaging Logic
 // =========================================================================
 
-// ... (sendMessage, displayMessage, socket.on(receive_message), socket.on(receive_demo_message) остаются без изменений) ...
-
 function sendMessage() {
     const input = document.getElementById('msg-input');
     const msg = input.value.trim();
@@ -162,9 +159,98 @@ socket.on('receive_demo_message', (data) => {
     }
 });
 
+// =========================================================================
+// 3. Friend Request Logic
+// =========================================================================
+
+/**
+ * Отправляет запрос в друзья выбранному пользователю.
+ */
+window.sendFriendRequest = function() {
+    const target = document.getElementById('friend-req-input').value.trim();
+    if (!target || target === currentUser.username) {
+        alert('Введите корректный ник, чтобы отправить запрос.');
+        return;
+    }
+    
+    socket.emit('friend_request', target);
+    alert(`Запрос в друзья отправлен пользователю: ${target}`);
+    document.getElementById('friend-req-input').value = '';
+};
+
+/**
+ * Рендерит список входящих запросов в модальном окне.
+ */
+function renderFriendRequests() {
+    const container = document.getElementById('friend-requests-list');
+    container.innerHTML = '';
+    
+    if (friendRequests.length === 0) {
+        container.innerHTML = '<p class="no-requests">Нет входящих запросов.</p>';
+        return;
+    }
+
+    friendRequests.forEach(request => {
+        const div = document.createElement('div');
+        div.className = 'request-item';
+        div.innerHTML = `
+            <span>${request.from}</span>
+            <div>
+                <button class="accept-btn" onclick="handleFriendRequest('${request.from}', 'accept')">Принять</button>
+                <button class="reject-btn" onclick="handleFriendRequest('${request.from}', 'reject')">Отклонить</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+/**
+ * Открывает/закрывает модальное окно с запросами в друзья.
+ */
+window.toggleRequestModal = function() {
+    const modal = document.getElementById('requests-modal');
+    if (modal.style.display === 'flex') {
+        modal.style.display = 'none';
+    } else {
+        renderFriendRequests();
+        modal.style.display = 'flex';
+    }
+}
+
+/**
+ * Обрабатывает принятие или отклонение запроса.
+ */
+function handleFriendRequest(username, action) {
+    if (action === 'accept') {
+        socket.emit('accept_friend', username);
+        addFriendToUI(username);
+        alert(`Вы приняли запрос от ${username}.`);
+    } else {
+        socket.emit('reject_friend', username);
+        alert(`Вы отклонили запрос от ${username}.`);
+    }
+
+    friendRequests = friendRequests.filter(req => req.from !== username);
+    renderFriendRequests();
+}
+
+// --- Socket Listeners для запросов ---
+
+socket.on('new_friend_request', (data) => {
+    if (!friendRequests.find(req => req.from === data.from)) {
+        friendRequests.push(data);
+        alert(`Новый запрос в друзья от ${data.from}!`);
+        // В реальном приложении: добавить счетчик на кнопку запросов
+    }
+});
+
+socket.on('request_accepted', (data) => {
+    addFriendToUI(data.from);
+    alert(`${data.from} принял ваш запрос в друзья!`);
+});
 
 // =========================================================================
-// 3. WebRTC Implementation (Call Core)
+// 4. WebRTC Implementation (Call Core)
 // =========================================================================
 
 async function startCall() {
@@ -195,29 +281,22 @@ async function startCall() {
 async function setupPeerConnection(targetUser) {
     peerConnection = new RTCPeerConnection(ICE_SERVERS);
     
-    // 1. Добавляем локальные медиа-треки
     localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-    // 2. Обработчик получения удаленного потока
     peerConnection.ontrack = (event) => {
         const remoteVideo = document.getElementById('remote-video');
         const screenShareVideo = document.getElementById('screen-share-video');
         
-        // Поток демонстрации экрана обычно имеет тип 'application' (Chrome) или специальный ID
-        // Мы используем простой подход: если трек видео не основной, считаем его экраном
-        
+        // Определяем, является ли поток экраном
         const videoTracks = event.streams[0].getVideoTracks();
         if (videoTracks.length > 0 && videoTracks[0].label.includes('screen')) {
-            // Вероятно, это демонстрация экрана
             screenShareVideo.srcObject = event.streams[0];
             screenShareVideo.style.display = 'block';
         } else {
-            // Это основной удаленный видеопоток
             remoteVideo.srcObject = event.streams[0];
         }
     };
     
-    // 3. Сбор ICE-кандидатов
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
             socket.emit('ice_candidate', { to: targetUser, candidate: event.candidate });
@@ -244,8 +323,6 @@ async function answerCall() {
         rejectCall();
     }
 }
-
-// ... (socket.on(sdp_offer), socket.on(sdp_answer), socket.on(ice_candidate) остаются без изменений) ...
 
 socket.on('sdp_offer', async (data) => {
     if (!peerConnection) {
@@ -285,7 +362,7 @@ function endCall() {
     if (!isCallActive) return;
 
     if (isSharingScreen) {
-        stopScreenShare(); // Останавливаем демонстрацию, если активна
+        stopScreenShare();
     }
 
     if (callPartner) {
@@ -307,7 +384,7 @@ function endCall() {
     document.getElementById('remote-video').srcObject = null;
     document.getElementById('local-video').srcObject = null;
     document.getElementById('screen-share-video').srcObject = null;
-    document.getElementById('screen-share-video').style.display = 'none'; // Скрываем элемент
+    document.getElementById('screen-share-video').style.display = 'none';
 
     document.getElementById('mic-toggle').classList.remove('off');
     document.getElementById('camera-toggle').classList.remove('off');
@@ -332,9 +409,8 @@ socket.on('call_end', (data) => {
     }
 });
 
-
 // =========================================================================
-// 4. Media Controls (Mic, Cam, Screen Share)
+// 5. Media Controls (Mic, Cam, Screen Share)
 // =========================================================================
 
 function toggleMic() {
@@ -359,8 +435,6 @@ function toggleCamera() {
     }
 }
 
-// --- Screen Share Logic ---
-
 async function toggleScreenShare() {
     if (!peerConnection) return;
 
@@ -368,20 +442,16 @@ async function toggleScreenShare() {
         stopScreenShare();
     } else {
         try {
-            // Запрашиваем поток экрана (getDisplayMedia)
             screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             const screenTrack = screenShareStream.getVideoTracks()[0];
 
-            // 1. Заменяем текущий видео-трек камеры на трек экрана
             const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
             if (sender) {
                 await sender.replaceTrack(screenTrack);
             }
             
-            // 2. Отображаем локальный экран в углу
             document.getElementById('local-video').srcObject = screenShareStream;
 
-            // 3. Обработчик, если пользователь нажал "Остановить" в нативном UI браузера
             screenTrack.onended = () => {
                 if (isSharingScreen) {
                     stopScreenShare();
@@ -390,7 +460,6 @@ async function toggleScreenShare() {
 
             isSharingScreen = true;
             document.getElementById('screen-share-toggle').classList.add('active');
-            alert('Демонстрация экрана началась!');
 
         } catch (err) {
             console.error('Ошибка при демонстрации экрана:', err);
@@ -406,19 +475,16 @@ function stopScreenShare() {
     const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
     const localVideoTrack = localStream.getVideoTracks()[0];
 
-    // 1. Возвращаем исходный видео-трек камеры
     if (sender && localVideoTrack) {
         sender.replaceTrack(localVideoTrack);
     }
     
-    // 2. Останавливаем треки потока экрана
     if (screenShareStream) {
         screenShareStream.getTracks().forEach(track => track.stop());
         screenShareStream = null;
     }
 
-    // 3. Обновляем UI
-    document.getElementById('local-video').srcObject = localStream; // Возвращаем камеру в превью
+    document.getElementById('local-video').srcObject = localStream;
     document.getElementById('screen-share-toggle').classList.remove('active');
     isSharingScreen = false;
 }
