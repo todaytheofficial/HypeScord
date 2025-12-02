@@ -20,6 +20,8 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 
+const multer = require('multer'); // Для обработки аватаров
+
 // -----------------------------------------------------------
 
 const app = express();
