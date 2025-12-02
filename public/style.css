@@ -307,6 +307,16 @@ input:focus {
     position: fixed; top: 20px; right: 20px; background: var(--bg-darker); padding: 15px;
     border: 1px solid var(--accent-primary); z-index: 1001; display: none; border-radius: 8px;
 }
+
+.special-border {
+    /* Оранжевая обводка, которую вы увидите вокруг аватаров */
+    border: 3px solid #340087; 
+    border-radius: 50%;
+    padding: 1px; /* Небольшой отступ, чтобы обводка не сливалась */
+    /* Плавный переход */
+    transition: border 0.3s ease; 
+}
+
 #incoming-call-box button { margin: 5px; padding: 8px 15px; border-radius: 4px; }
 #incoming-call-box button:first-child { background: var(--success-color); color: white; font-weight: bold;}
 #incoming-call-box button:last-child { background: var(--error-color); color: white; }

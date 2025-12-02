@@ -1,6 +1,5 @@
 // public/client.js
-// Глобальные переменные объявлены через 'var' для совместимости с HTML-обработчиками
-// Глобальный объект window.socket будет инициализирован после успешного входа
+// Глобальные переменные для доступа из HTML и других функций
 var currentUser = null; 
 var currentChatUser = 'general-demo'; 
 var callPartner = null;
@@ -50,11 +49,16 @@ window.onload = async () => {
 function initApp() {
     document.getElementById('app-screen').style.display = 'flex';
     document.getElementById('current-username').innerText = currentUser.username;
-    document.getElementById('current-user-avatar').src = currentUser.avatar;
     
-    // ---------------------------------------------------------------------
+    const userAvatarEl = document.getElementById('current-user-avatar');
+    userAvatarEl.src = currentUser.avatar;
+    
+    // Специальная обводка для Today_Idk
+    if (currentUser.username === 'Today_Idk') {
+        userAvatarEl.classList.add('special-border');
+    }
+    
     // Инициализация Socket.IO после аутентификации
-    // ---------------------------------------------------------------------
     window.socket = io({ 
         query: { 
             userId: currentUser.id, 
@@ -62,15 +66,35 @@ function initApp() {
         } 
     });
     setupSocketListeners();
-    // ---------------------------------------------------------------------
-
-    const friendsList = document.getElementById('friends-list');
-    friendsList.innerHTML = ''; 
-    
-    openChat('general-demo'); 
+    // Список друзей и чат откроются после получения initial_data от сервера
 }
 
 function setupSocketListeners() {
+    // --- Получение начальных данных (Друзья и Заявки) ---
+    window.socket.on('initial_data', (data) => {
+        const friendsList = document.getElementById('friends-list');
+        friendsList.innerHTML = ''; 
+        
+        // Добавляем персистентных друзей
+        data.friends.forEach(f => addFriendToUI(`${f} (Offline)`, f));
+        
+        // Загружаем персистентные заявки в друзья
+        friendRequests = data.pendingRequests.map(username => ({ from: username }));
+        
+        // Открываем чат по умолчанию
+        openChat('general-demo'); 
+    });
+
+    // --- Message History ---
+    window.socket.on('message_history', (data) => {
+        const container = document.getElementById('messages-container');
+        container.innerHTML = ''; // Очистка перед загрузкой истории
+
+        if (data.partner === currentChatUser) {
+            data.messages.forEach(msg => displayMessage(msg));
+        }
+    });
+
     // Messaging Logic
     window.socket.on('receive_message', (data) => {
         if (data.from === currentChatUser || (data.isMe && data.from === currentUser.username)) {
@@ -122,18 +146,14 @@ function setupSocketListeners() {
     window.socket.on('call_end', handleCallEnd);
 }
 
+// --- WebRTC Handlers (Без изменений) ---
 function handleSdpOffer(data) {
     if (!peerConnection) {
         callPartner = data.from;
-        // Показываем входящий звонок
         document.getElementById('caller-name').innerText = data.from;
         document.getElementById('incoming-call-box').style.display = 'block';
     }
-    
-    if (peerConnection) {
-        // Если уже в звонке (был ответ answerCall) или мы инициатор
-        answerCall(data);
-    }
+    if (peerConnection) { answerCall(data); }
 }
 
 function handleSdpAnswer(data) {
@@ -161,6 +181,7 @@ function handleCallEnd(data) {
     }
 }
 
+// --- Friends List UI ---
 
 function addFriendToUI(nameWithStatus, rawName, avatarUrl = 'https://via.placeholder.com/150') {
     const list = document.getElementById('friends-list');
@@ -170,7 +191,15 @@ function addFriendToUI(nameWithStatus, rawName, avatarUrl = 'https://via.placeho
     const div = document.createElement('div');
     div.id = `friend-${rawName}`; 
     div.className = 'friend-item';
+    
     div.innerHTML = `<img src="${avatarUrl}" alt="${rawName}"><span>${nameWithStatus}</span>`;
+
+    // Применяем обводку, если друг - Today_Idk
+    const img = div.querySelector('img');
+    if (rawName === 'Today_Idk') {
+        img.classList.add('special-border');
+    }
+    
     div.onclick = () => openChat(rawName);
     list.appendChild(div);
 }
@@ -194,21 +223,16 @@ function openChat(username) {
     document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
     
     if (username !== 'general-demo') {
-        const friendElement = Array.from(document.querySelectorAll('.friend-item span')).find(span => span.textContent.startsWith(username));
+        const friendElement = document.getElementById(`friend-${username}`);
         if (friendElement) {
-             friendElement.closest('.friend-item').classList.add('active');
+             friendElement.classList.add('active');
+             // Запрос истории сообщений при открытии чата
+             window.socket.emit('get_history', username);
         }
     }
 }
 
-window.toggleSettings = function() {
-    const modal = document.getElementById('settings-modal');
-    if (modal) {
-        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-    }
-}
-
-// --- Theme Implementation ---
+// --- Theme Logic (Без изменений) ---
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
@@ -231,6 +255,13 @@ window.toggleTheme = function() {
     updateThemeUI(newTheme);
 }
 
+window.toggleSettings = function() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) {
+        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    }
+}
+
 // =========================================================================
 // 2. Messaging Logic
 // =========================================================================
@@ -251,11 +282,19 @@ function sendMessage() {
 function displayMessage(data, isDemo = false) {
     const container = document.getElementById('messages-container');
     const div = document.createElement('div');
-    const author = data.isMe || isDemo ? data.from : data.from;
+    const author = data.from;
     const isOutgoing = data.isMe && !isDemo; 
 
     div.className = `message ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    div.innerHTML = `<span class="author">${author}</span>${data.message}`;
+    
+    // Создаем аватарку и имя
+    let avatarHtml = `<img src="https://via.placeholder.com/50" alt="${author}">`; 
+    if (author === 'Today_Idk') {
+         // Добавляем специальный класс для обводки
+         avatarHtml = `<img src="https://via.placeholder.com/50" alt="${author}" class="special-border">`;
+    }
+    
+    div.innerHTML = `${avatarHtml}<div class="content"><span class="author">${author}</span>${data.message}</div>`;
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
 }
@@ -272,7 +311,7 @@ window.sendFriendRequest = function() {
     }
     
     window.socket.emit('friend_request', target);
-    alert(`Запрос в друзья отправлен пользователю: ${target}`);
+    alert(`Запрос в друзья отправлен пользователю: ${target}.`);
     document.getElementById('friend-req-input').value = '';
 };
 
@@ -377,17 +416,15 @@ async function setupPeerConnection(targetUser) {
     };
 }
 
-// Принятие звонка (используется и для входящего звонка, и как ответ на offer)
 async function answerCall(data) {
     document.getElementById('incoming-call-box').style.display = 'none';
     isCallActive = true;
-    const targetUser = callPartner; // Имя собеседника
+    const targetUser = callPartner; 
 
     if (!localStream) {
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (err) {
-            console.error("Ошибка доступа к медиа:", err);
             alert('Невозможно получить доступ к микрофону/камере.');
             rejectCall();
             return;
@@ -403,7 +440,6 @@ async function answerCall(data) {
     }
     
     if (data && data.sdp.type === 'offer') {
-        // Установка удаленного описания и отправка ответа (answer)
         await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
@@ -510,7 +546,6 @@ window.toggleScreenShare = async function() {
             document.getElementById('screen-share-toggle').classList.add('active');
 
         } catch (err) {
-            console.error('Ошибка при демонстрации экрана:', err);
             isSharingScreen = false;
             document.getElementById('screen-share-toggle').classList.remove('active');
         }
