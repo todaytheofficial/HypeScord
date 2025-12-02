@@ -1,6 +1,9 @@
-// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с Material Icons, исправленной логикой звонков и файлов)
+// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с WebRTC, Material Icons, исправленной логикой звонков и файлов)
 
-// Глобальные переменные
+// =========================================================================
+// Глобальные переменные и Конфигурация WebRTC
+// =========================================================================
+
 var currentUser = null; 
 var currentChatUser = 'general-demo'; 
 var callPartner = null;
@@ -13,7 +16,6 @@ var friendRequests = [];
 var isAwaitingAnswer = false; 
 var incomingSdpOffer = null; // Переменная для хранения входящего SDP
 
-// WebRTC Configuration
 const ICE_SERVERS = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
@@ -60,6 +62,7 @@ function initApp() {
         userAvatarEl.classList.add('special-border');
     }
     
+    // Инициализация Socket.IO
     window.socket = io({ 
         query: { 
             userId: currentUser.id, 
@@ -248,8 +251,7 @@ window.sendFile = async (files) => {
     reader.onload = function(e) {
         const fileData = e.target.result;
         
-        // Отправляем ТОЛЬКО объект file. 
-        // Если на сервере поле message обязательно, нужно проверить серверный код.
+        // Отправляем объект file. Добавляем message: '' для предотвращения ошибки NOT NULL на сервере.
         window.socket.emit('chat_message', { 
             toUser: currentChatUser, 
             file: {
@@ -257,7 +259,6 @@ window.sendFile = async (files) => {
                 name: file.name,
                 type: file.type
             },
-            // Добавляем пустую строку, чтобы предотвратить ошибку NOT NULL
             message: '' 
         });
         
@@ -280,7 +281,7 @@ function displayMessage(data, isDemo = false) {
     
     let contentHtml = '';
 
-    if (data.message) {
+    if (data.message && data.message.trim() !== '') {
         contentHtml = data.message;
     } 
     else if (data.file && data.file.data) {
@@ -294,10 +295,14 @@ function displayMessage(data, isDemo = false) {
             const tag = mimeType === 'video' ? 'video' : 'audio';
             mediaTag = `<${tag} controls src="${file.data}"></${tag}>`;
         } else {
+            // Иконка Material Icons для вложения
             mediaTag = `<div class="file-info"><i class="material-icons">attachment</i><span>${file.name}</span></div>`;
         }
 
         contentHtml = `<div class="media-attachment">${mediaTag}</div>`;
+    } else {
+        // Если сообщение пустое и файла нет, не отображаем.
+        return; 
     }
 
     div.innerHTML = `${avatarHtml}<div class="content"><span class="author">${author}</span>${contentHtml}</div>`;
@@ -378,6 +383,7 @@ window.startCall = async function() {
     if (isCallActive || currentChatUser === 'general-demo' || isAwaitingAnswer) return;
 
     try {
+        // Получаем локальный медиапоток
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         
         document.getElementById('current-call-partner').innerText = currentChatUser;
@@ -386,10 +392,12 @@ window.startCall = async function() {
 
         await setupPeerConnection(currentChatUser);
         
+        // Создаем и отправляем SDP Offer
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         window.socket.emit('sdp_offer', { to: currentChatUser, sdp: peerConnection.localDescription });
 
+        // Устанавливаем состояние ожидания
         isAwaitingAnswer = true;
         callPartner = currentChatUser;
         document.getElementById('calling-name').innerText = currentChatUser;
@@ -408,6 +416,7 @@ async function setupPeerConnection(targetUser) {
     }
     peerConnection = new RTCPeerConnection(ICE_SERVERS);
     
+    // Добавляем локальные треки
     if (localStream) {
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     }
@@ -417,6 +426,7 @@ async function setupPeerConnection(targetUser) {
         const remoteVideo = document.getElementById('remote-video');
         const screenShareVideo = document.getElementById('screen-share-video');
         
+        // Определяем, является ли это потоком демонстрации экрана
         const videoTracks = event.streams[0].getVideoTracks();
         if (videoTracks.length > 0 && videoTracks[0].label.includes('screen')) {
             screenShareVideo.srcObject = event.streams[0];
@@ -446,21 +456,34 @@ async function setupPeerConnection(targetUser) {
 
 // ИСПРАВЛЕНА ЛОГИКА ПРИГЛАШЕНИЯ
 function handleSdpOffer(data) {
+    // Если звонок еще не активен и мы не ждем ответа
     if (!isCallActive && !isAwaitingAnswer) {
         callPartner = data.from;
+        // Показываем UI входящего звонка (ту самая "менюшка")
         document.getElementById('caller-name').innerText = data.from;
         document.getElementById('incoming-call-box').style.display = 'flex';
+        // Сохраняем SDP для обработки при нажатии "answerCall()"
         window.incomingSdpOffer = data;
     }
     
+    // Если мы уже в звонке (используется для обмена треками)
     if (peerConnection && isCallActive) { 
-        answerCall(data);
+        // Не вызываем answerCall(), если это не новый SDP для замены треков
+        // В данном случае, просто игнорируем или обрабатываем как re-negotiation
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp))
+            .then(() => peerConnection.createAnswer())
+            .then(answer => peerConnection.setLocalDescription(answer))
+            .then(() => {
+                window.socket.emit('sdp_answer', { to: data.from, sdp: peerConnection.localDescription });
+            })
+            .catch(e => console.error("Error handling mid-call offer:", e));
     }
 }
 
 function handleSdpAnswer(data) {
     if (peerConnection && peerConnection.remoteDescription === null) {
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        // Скрываем окно ожидания, так как звонок принят
         document.getElementById('awaiting-answer-box').style.display = 'none';
         isAwaitingAnswer = false;
         isCallActive = true;
@@ -481,11 +504,12 @@ function handleIceCandidate(data) {
 
 function handleCallEnd(data) {
     if (data.from === callPartner) {
-        endCall(false); 
+        endCall(false); // Завершить локально, не отправляя сигнал обратно
+        alert(`Звонок с ${data.from} завершен.`);
     }
 }
 
-// ИСПРАВЛЕНА ЛОГИКА ОТВЕТА
+// ИСПРАВЛЕНА ЛОГИКА ОТВЕТА (Принятие входящего звонка)
 window.answerCall = async function() {
     const data = window.incomingSdpOffer;
     if (!data || isCallActive) return; 
@@ -493,14 +517,15 @@ window.answerCall = async function() {
     document.getElementById('incoming-call-box').style.display = 'none';
     isCallActive = true; 
     const targetUser = callPartner; 
-    window.incomingSdpOffer = null;
+    window.incomingSdpOffer = null; // Очищаем
 
+    // Получаем медиапоток, если его еще нет
     if (!localStream) {
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (err) {
             alert('Невозможно получить доступ к микрофону/камере.');
-            rejectCall();
+            rejectCall(false); // Отклоняем без отправки сигнала
             return;
         }
     }
@@ -509,14 +534,17 @@ window.answerCall = async function() {
     document.getElementById('call-ui').style.display = 'flex';
     document.getElementById('local-video').srcObject = localStream;
         
+    // 1. Создаем PeerConnection и добавляем треки
     if (!peerConnection) {
         await setupPeerConnection(targetUser);
     }
     
+    // 2. Устанавливаем offer, который мы сохранили
     if (data && data.sdp) {
          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
     }
     
+    // 3. Создаем и отправляем ответ (Answer)
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
     window.socket.emit('sdp_answer', { to: targetUser, sdp: peerConnection.localDescription });
@@ -534,16 +562,19 @@ window.endCall = function(sendSignal = true, message = "Звонок завер�
         window.socket.emit('call_end', callPartner);
     }
 
+    // Закрытие PeerConnection
     if (peerConnection) {
         peerConnection.close();
         peerConnection = null;
     }
 
+    // Остановка медиа треков
     if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
         localStream = null;
     }
 
+    // Сброс UI
     document.getElementById('call-ui').style.display = 'none';
     document.getElementById('incoming-call-box').style.display = 'none';
     document.getElementById('awaiting-answer-box').style.display = 'none'; 
@@ -558,6 +589,7 @@ window.endCall = function(sendSignal = true, message = "Звонок завер�
     isCallActive = false;
     isAwaitingAnswer = false; 
     callPartner = null;
+    incomingSdpOffer = null; // Очищаем
     
     document.getElementById('mic-toggle').classList.remove('off');
     document.getElementById('camera-toggle').classList.remove('off');
@@ -565,10 +597,11 @@ window.endCall = function(sendSignal = true, message = "Звонок завер�
 }
 
 
-window.rejectCall = function() {
+window.rejectCall = function(sendSignal = true) {
     document.getElementById('incoming-call-box').style.display = 'none';
-    if (callPartner) {
+    if (callPartner && sendSignal) {
         window.socket.emit('call_end', callPartner); 
+        alert(`Вы отклонили вызов от ${callPartner}.`);
     }
     callPartner = null;
     incomingSdpOffer = null;
@@ -587,6 +620,7 @@ window.toggleMic = function() {
     if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         button.classList.toggle('off', !audioTrack.enabled);
+        button.querySelector('.material-icons').innerText = audioTrack.enabled ? 'mic' : 'mic_off';
     }
 }
 
@@ -598,26 +632,31 @@ window.toggleCamera = function() {
     if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         button.classList.toggle('off', !videoTrack.enabled);
+        button.querySelector('.material-icons').innerText = videoTrack.enabled ? 'videocam' : 'videocam_off';
     }
 }
 
 window.toggleScreenShare = async function() {
-    if (!peerConnection || isAwaitingAnswer) return;
+    if (!peerConnection || isAwaitingAnswer || !isCallActive) return;
 
     if (isSharingScreen) {
         stopScreenShare();
     } else {
         try {
+            // Запрашиваем поток демонстрации экрана
             screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             const screenTrack = screenShareStream.getVideoTracks()[0];
 
+            // Находим отправителя видео и заменяем трек
             const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
             if (sender) {
                 await sender.replaceTrack(screenTrack);
             }
             
+            // Отображаем локально демонстрацию экрана
             document.getElementById('local-video').srcObject = screenShareStream;
 
+            // Обработка завершения демонстрации (например, через кнопку в браузере)
             screenTrack.onended = () => {
                 if (isSharingScreen) {
                     stopScreenShare();
@@ -641,6 +680,7 @@ window.toggleScreenShare = async function() {
 function stopScreenShare() {
     if (!isSharingScreen || !localStream) return;
     
+    // Заменяем трек обратно на локальную камеру
     const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
     const localVideoTrack = localStream.getVideoTracks()[0];
 
@@ -648,11 +688,13 @@ function stopScreenShare() {
         sender.replaceTrack(localVideoTrack);
     }
     
+    // Останавливаем поток демонстрации
     if (screenShareStream) {
         screenShareStream.getTracks().forEach(track => track.stop());
         screenShareStream = null;
     }
 
+    // Сброс UI
     document.getElementById('local-video').srcObject = localStream;
     document.getElementById('screen-share-toggle').classList.remove('active');
     document.getElementById('local-screen-indicator').style.display = 'none'; 
