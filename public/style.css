@@ -1,0 +1,269 @@
+/* public/style.css (Финальная версия: Clean Minimal Dark/Light Theme) */
+
+/* =========================================================================
+   1. Тематические Переменные
+   ========================================================================= */
+
+/* --- Базовые переменные для ТЕМНОЙ темы (Dark Mode - Default) --- */
+[data-theme="dark"] {
+    --bg-main: #2f3136; /* Основной фон (Chat Area) */
+    --bg-darker: #202225; /* Сайдбары */
+    --bg-panel: #36393f; /* Панели, input, Hover */
+    --accent-primary: #5865f2; /* Синий акцент (Discord Blue) */
+    --accent-secondary: #4f545c; /* Второстепенный акцент/Кнопка Off */
+    --text-color: #ffffff; /* Белый основной текст */
+    --text-secondary: #b9bbbe; /* Серый второстепенный текст */
+    --border-color: rgba(32, 34, 37, 0.6);
+    --error-color: #f04747; /* Красный (Отбой/Ошибка) */
+    --success-color: #43b581; /* Зеленый (Звонок/Онлайн) */
+}
+
+/* --- Базовые переменные для СВЕТЛОЙ темы (Light Mode) --- */
+[data-theme="light"] {
+    --bg-main: #f2f3f5;
+    --bg-darker: #ffffff;
+    --bg-panel: #e3e5e8;
+    --accent-primary: #5865f2;
+    --accent-secondary: #dcddde;
+    --text-color: #2e3338;
+    --text-secondary: #72767d;
+    --border-color: rgba(114, 118, 125, 0.2);
+    --error-color: #cc4545;
+    --success-color: #388a65;
+}
+
+/* --- Общие константы --- */
+:root {
+    --server-width: 70px;
+    --sidebar-width: 260px;
+}
+
+
+/* =========================================================================
+   2. Base & Utility
+   ========================================================================= */
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif; 
+    background-color: var(--bg-main);
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+    transition: background-color 0.3s, color 0.3s;
+}
+* { box-sizing: border-box; }
+input, button, .cta-btn, .file-upload {
+    font-family: inherit;
+    border-radius: 4px;
+    transition: all 0.2s;
+    outline: none;
+}
+img { object-fit: cover; }
+.neon-glow {
+    /* Удален неоновый эффект по запросу пользователя */
+    text-shadow: none; 
+}
+
+/* =========================================================================
+   3. Auth Screen
+   ========================================================================= */
+
+.auth-container {
+    display: flex; justify-content: center; align-items: center; height: 100vh;
+}
+.auth-panel {
+    background-color: var(--bg-darker);
+    padding: 30px;
+    width: 380px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+.auth-panel h1 { color: var(--accent-primary); text-align: center; font-size: 28px; }
+.tabs { text-align: center; margin-bottom: 15px; }
+.tabs button {
+    background: none; border: none; color: var(--text-secondary); padding: 8px 15px; cursor: pointer;
+}
+.tabs button.active {
+    color: var(--text-color);
+    border-bottom: 2px solid var(--accent-primary);
+    font-weight: 600;
+}
+input {
+    width: 100%; padding: 10px; margin: 8px 0; border: 1px solid var(--border-color);
+    background: var(--bg-panel); color: var(--text-color);
+}
+input:focus {
+    outline: 2px solid var(--accent-primary); 
+    border-color: transparent;
+}
+.cta-btn {
+    width: 100%; padding: 10px; background: var(--accent-primary); color: white; border: none; font-weight: bold;
+    margin-top: 15px;
+}
+.cta-btn:hover { opacity: 0.9; }
+.file-upload { 
+    padding: 8px; text-align: center; background: var(--bg-panel); 
+    color: var(--text-secondary); margin-top: 10px; border: 1px dashed var(--accent-secondary);
+}
+
+
+/* =========================================================================
+   4. App Layout (Servers & Sidebar)
+   ========================================================================= */
+
+.app-container { display: flex; height: 100vh; }
+
+.server-list {
+    width: var(--server-width); background: var(--bg-darker); padding-top: 10px; flex-shrink: 0;
+}
+.server-icon {
+    width: 50px; height: 50px; margin: 0 auto 10px; border-radius: 50%;
+    background: var(--bg-panel); color: var(--text-secondary); 
+    display: flex; justify-content: center; align-items: center; cursor: pointer;
+}
+.server-icon:hover, .server-icon.active { 
+    border-radius: 30%; background: var(--accent-primary); color: white; 
+}
+.server-icon svg { width: 24px; height: 24px; }
+
+.sidebar {
+    width: var(--sidebar-width); background: var(--bg-darker); display: flex; flex-direction: column;
+    border-right: 1px solid var(--border-color); flex-shrink: 0;
+}
+.search-bar { padding: 10px; }
+.search-bar input { margin: 0; padding: 6px; }
+
+.dm-list { flex: 1; padding: 10px; overflow-y: auto; }
+.dm-list h3 { color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; padding: 0 5px;}
+.friend-item {
+    padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+}
+.friend-item:hover, .friend-item.active { background: var(--bg-panel); }
+.friend-item img { width: 30px; height: 30px; border-radius: 50%; }
+
+.user-panel {
+    padding: 8px; background: var(--bg-panel); display: flex; align-items: center; gap: 8px;
+    border-top: 1px solid var(--border-color);
+}
+.user-panel img { width: 32px; height: 32px; border-radius: 50%; }
+.username { font-weight: 600; font-size: 13px; }
+.status { font-size: 11px; color: var(--success-color); }
+.settings-btn { 
+    background: none; border: none; color: var(--text-secondary); cursor: pointer; margin-left: auto; padding: 5px; 
+}
+.settings-btn:hover { color: var(--text-color); }
+
+
+/* =========================================================================
+   5. Chat Area & Messaging
+   ========================================================================= */
+
+.chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+.chat-header {
+    padding: 12px 15px; border-bottom: 1px solid var(--border-color); font-weight: bold;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.chat-title { font-size: 16px; color: var(--text-color); }
+.chat-header .call-btn {
+    background: var(--success-color); border: none; color: white; padding: 6px 12px;
+    display: flex; align-items: center; gap: 5px; cursor: pointer; border-radius: 4px; font-size: 13px;
+}
+.chat-header .call-btn:hover { background: #3fa774; }
+
+.messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.message { padding: 8px 12px; border-radius: 8px; max-width: 65%; word-wrap: break-word; font-size: 14px; }
+.message span.author { font-weight: 600; color: var(--accent-primary); font-size: 13px; display: block; margin-bottom: 2px; }
+.message.incoming { background: var(--bg-panel); align-self: flex-start; }
+.message.outgoing { 
+    background: var(--accent-primary); color: white; align-self: flex-end; 
+}
+.message.outgoing span.author { color: white; }
+
+.chat-input-area { padding: 10px; display: flex; gap: 8px; background: var(--bg-main); }
+.chat-input-area input { flex: 1; padding: 10px; margin: 0; background: var(--bg-panel); border: none; }
+.send-btn { width: 40px; background: var(--accent-primary); border: none; color: white; padding: 0; }
+.send-btn svg { width: 20px; height: 20px; }
+
+
+/* =========================================================================
+   6. Modals & Settings
+   ========================================================================= */
+
+.modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 999;
+}
+.modal-content {
+    background: var(--bg-darker); padding: 25px; position: relative; width: 450px;
+    border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.close { position: absolute; top: 10px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-secondary);}
+.modal-content h2 { color: var(--text-color); }
+.setting-item { margin-bottom: 20px; }
+.setting-item button { margin-top: 5px; }
+.logout-btn { 
+    color: var(--error-color); text-decoration: none; padding: 8px; display: block; 
+    text-align: center; border: 1px solid var(--error-color); border-radius: 4px;
+}
+
+
+/* =========================================================================
+   7. WebRTC Call UI
+   ========================================================================= */
+
+#call-ui {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.98); z-index: 1000; display: none; 
+    flex-direction: column; justify-content: center; align-items: center;
+}
+.call-box {
+    display: flex; flex-direction: column; align-items: center;
+}
+#remote-video {
+    width: 60vw; height: 50vh; max-width: 1200px;
+    background: black; margin: 10px 0; border: 3px solid var(--accent-primary);
+    object-fit: contain; /* Чтобы видео помещалось целиком */
+}
+#local-video {
+    position: absolute; bottom: 90px; right: 20px; width: 180px; height: 120px; 
+    z-index: 1010; border: 2px solid var(--accent-secondary);
+}
+#screen-share-video {
+    position: absolute; top: 20px; right: 20px; width: 250px; height: 150px; 
+    z-index: 1020; border: 2px solid var(--success-color); display: none;
+    object-fit: contain;
+}
+#call-controls { margin-top: 15px; }
+#call-controls button {
+    width: 50px; height: 50px; border-radius: 50%; border: none; margin: 5px;
+    background: var(--bg-panel); color: var(--text-color);
+    display: inline-flex; justify-content: center; align-items: center;
+    cursor: pointer;
+}
+#call-controls button svg { width: 24px; height: 24px; }
+
+/* Кнопка "Завершить" */
+#end-call-btn { 
+    background: var(--error-color); color: white; 
+}
+/* Активная демонстрация экрана */
+#screen-share-toggle.active { 
+    background: var(--success-color); color: white; 
+}
+
+/* Состояние "выключено" для кнопок медиа (Mic/Camera) */
+#call-controls button.off {
+    background: var(--accent-secondary); 
+    color: var(--text-secondary);
+}
+
+/* Incoming Call Box */
+#incoming-call-box {
+    position: fixed; top: 20px; right: 20px; background: var(--bg-darker); padding: 15px;
+    border: 1px solid var(--accent-primary); z-index: 1001; display: none; border-radius: 8px;
+}
+#incoming-call-box button { margin: 5px; padding: 8px 15px; border-radius: 4px; }
+#incoming-call-box button:first-child { background: var(--success-color); color: white; font-weight: bold;}
+#incoming-call-box button:last-child { background: var(--error-color); color: white; }

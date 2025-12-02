@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HypeScord</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body data-theme="dark">
+
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-panel">
+            <h1>HypeScord</h1>
+            <div class="tabs">
+                <button onclick="showAuth('login')" class="active">Вход</button>
+                <button onclick="showAuth('register')">Регистрация</button>
+            </div>
+            
+            <form id="login-form" action="/login" method="POST">
+                <input type="text" name="username" placeholder="Имя пользователя" required>
+                <input type="password" name="password" placeholder="Пароль" required>
+                <button type="submit" class="cta-btn">Войти</button>
+            </form>
+
+            <form id="register-form" action="/register" method="POST" enctype="multipart/form-data" style="display:none;">
+                <input type="text" name="username" placeholder="Придумайте ник" required>
+                <input type="password" name="password" placeholder="Пароль" required>
+                <label class="file-upload">
+                    <span>Загрузить аватар</span>
+                    <input type="file" name="avatar" accept="image/*">
+                </label>
+                <button type="submit" class="cta-btn">Создать аккаунт</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-screen" class="app-container" style="display:none;">
+        
+        <nav class="server-list">
+            <div class="server-icon home-icon active" onclick="openChat('general-demo')">
+                <svg viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </div>
+            <div class="separator"></div>
+            <div class="server-icon add-server">HS</div> 
+        </nav>
+
+        <aside class="sidebar">
+            <div class="search-bar"><input type="text" placeholder="Найти беседу..."></div>
+            <div class="dm-list">
+                <h3>Личные сообщения</h3>
+                <div id="friends-list">
+                    </div>
+            </div>
+            
+            <div class="user-panel">
+                <img id="current-user-avatar" src="" alt="Avatar">
+                <div class="user-info">
+                    <span id="current-username" class="username">User</span>
+                    <span id="current-status" class="status">Online</span>
+                </div>
+                <button class="settings-btn" onclick="toggleSettings()">
+                    <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .36.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </button>
+            </div>
+        </aside>
+
+        <main class="chat-area">
+            <header class="chat-header">
+                <span class="chat-title"># <span id="chat-with-name">general-demo</span></span>
+                <button id="call-btn" onclick="startCall()" class="call-btn" style="display: none;">
+                    <svg viewBox="0 0 24 24" width="20"><path fill="white" d="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.01.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.2c.28-.27.36-.66.24-1.01C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+                    Звонок
+                </button>
+            </header>
+            <div id="messages-container" class="messages">
+                </div>
+            <div class="chat-input-area">
+                <input type="text" id="msg-input" placeholder="Написать сообщение..." onkeydown="if(event.key === 'Enter') sendMessage()">
+                <button onclick="sendMessage()" class="send-btn">
+                    <svg viewBox="0 0 24 24" width="20"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleSettings()">&times;</span>
+            <h2>Настройки</h2>
+            <hr>
+            <div class="setting-item">
+                <h3>Добавить друга</h3>
+                <input type="text" id="friend-req-input" placeholder="Ник пользователя">
+                <button class="cta-btn" onclick="sendFriendRequest()">Отправить запрос</button>
+            </div>
+            <div class="setting-item">
+                <h3>Внешний вид</h3>
+                <p>Текущая тема: <span id="current-theme-name">Темная</span></p>
+                <button id="theme-btn" class="cta-btn" onclick="toggleTheme()">Сменить на Светлую</button>
+            </div>
+            <hr>
+            <a href="/logout" class="logout-btn">Выйти из аккаунта</a>
+        </div>
+    </div>
+
+    <div id="incoming-call-box">
+        <span id="caller-name"></span> вызывает вас...
+        <div>
+            <button onclick="answerCall()">Принять</button>
+            <button onclick="rejectCall()">Отклонить</button>
+        </div>
+    </div>
+
+    <div id="call-ui">
+        <div class="call-box">
+            <h3>Звонок с <span id="current-call-partner"></span></h3>
+            <video id="remote-video" autoplay></video> 
+            <video id="local-video" autoplay muted></video>
+            <video id="screen-share-video" autoplay></video> <div id="call-controls">
+                <button id="mic-toggle" onclick="toggleMic()" title="Микрофон">
+                    <svg id="mic-icon" viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3.96-3.48 7.23-7.79 6.84C8.78 17.65 8 16.5 8 15.18v-2.11c-2.48.71-4.3 2.68-4.3 5.03V20c0 .55.45 1 1 1h14c.55 0 1-.45 1-1v-2.11c0-2.35-1.82-4.32-4.3-5.03z"/></svg>
+                </button>
+                <button id="camera-toggle" onclick="toggleCamera()" title="Камера">
+                    <svg id="camera-icon" viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M17 10.5c0 .28-.22.5-.5.5h-3v3c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-3h-3c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h3v-3c0-.28.22-.5.5-.5s.5.22.5.5v3h3c.28 0 .5.22.5.5zM21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 15H3V6h18v13z"/></svg>
+                </button>
+                <button id="screen-share-toggle" onclick="toggleScreenShare()" title="Демонстрация экрана">
+                    <svg id="screen-share-icon" viewBox="0 0 24 24" width="24"><path fill="currentColor" d="M18 7l-1.41-1.41-6.34 6.34L3.81 7.41 2.4 8.82l6.34 6.34L18 7zM21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 15H3V6h18v13z"/></svg>
+                </button>
+                <button id="end-call-btn" onclick="endCall()" title="Завершить">
+                    <svg viewBox="0 0 24 24" width="24"><path fill="white" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm4.7 12.3c-.39.39-1.02.39-1.41 0l-3.29-3.29c-.39-.39-.39-1.02 0-1.41l3.29-3.29c.39-.39 1.02-.39 1.41 0 .39.39.39 1.02 0 1.41L13.12 12l3.58 3.58c.39.39.39 1.02 0 1.41z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
