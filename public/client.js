@@ -1,6 +1,6 @@
 // public/client.js
 // Глобальные переменные объявлены через 'var' для совместимости с HTML-обработчиками
-const socket = io();
+// Глобальный объект window.socket будет инициализирован после успешного входа
 var currentUser = null; 
 var currentChatUser = 'general-demo'; 
 var callPartner = null;
@@ -9,7 +9,7 @@ var localStream = null;
 var peerConnection = null;
 var screenShareStream = null;
 var isSharingScreen = false;
-var friendRequests = []; // Массив для хранения входящих запросов
+var friendRequests = []; 
 
 // WebRTC Configuration
 const ICE_SERVERS = {
@@ -35,7 +35,6 @@ window.onload = async () => {
     const res = await fetch('/me');
     const authScreen = document.getElementById('auth-screen');
     
-    // Инициализация темы
     applyInitialTheme();
 
     if (res.ok) {
@@ -53,20 +52,135 @@ function initApp() {
     document.getElementById('current-username').innerText = currentUser.username;
     document.getElementById('current-user-avatar').src = currentUser.avatar;
     
+    // ---------------------------------------------------------------------
+    // Инициализация Socket.IO после аутентификации
+    // ---------------------------------------------------------------------
+    window.socket = io({ 
+        query: { 
+            userId: currentUser.id, 
+            username: currentUser.username 
+        } 
+    });
+    setupSocketListeners();
+    // ---------------------------------------------------------------------
+
     const friendsList = document.getElementById('friends-list');
     friendsList.innerHTML = ''; 
-    addFriendToUI('Вася Пупкин'); 
     
     openChat('general-demo'); 
 }
 
-function addFriendToUI(name, avatarUrl = 'https://via.placeholder.com/150') {
+function setupSocketListeners() {
+    // Messaging Logic
+    window.socket.on('receive_message', (data) => {
+        if (data.from === currentChatUser || (data.isMe && data.from === currentUser.username)) {
+            displayMessage(data);
+        } 
+    });
+
+    window.socket.on('receive_demo_message', (data) => {
+        if (currentChatUser === 'general-demo') {
+            data.isMe = data.from === currentUser.username;
+            displayMessage(data, true);
+        }
+    });
+
+    // Friend Request Logic
+    window.socket.on('new_friend_request', (data) => {
+        if (!friendRequests.find(req => req.from === data.from)) {
+            friendRequests.push(data);
+            alert(`Новый запрос в друзья от ${data.from}!`);
+            if (document.getElementById('requests-modal').style.display === 'flex') {
+                 renderFriendRequests();
+            }
+        }
+    });
+
+    window.socket.on('request_accepted', (data) => {
+        addFriendToUI(`${data.from} (Online)`, data.from);
+        alert(`${data.from} принял ваш запрос в друзья!`);
+    });
+    
+    // Error Handling
+    window.socket.on('error', (message) => {
+        alert('Ошибка сервера: ' + message);
+    });
+
+    // Online/Offline Statuses
+    window.socket.on('user_online', (username) => {
+        updateFriendStatus(username, true);
+    });
+
+    window.socket.on('user_offline', (username) => {
+        updateFriendStatus(username, false);
+    });
+    
+    // WebRTC Listeners
+    window.socket.on('sdp_offer', handleSdpOffer);
+    window.socket.on('sdp_answer', handleSdpAnswer);
+    window.socket.on('ice_candidate', handleIceCandidate);
+    window.socket.on('call_end', handleCallEnd);
+}
+
+function handleSdpOffer(data) {
+    if (!peerConnection) {
+        callPartner = data.from;
+        // Показываем входящий звонок
+        document.getElementById('caller-name').innerText = data.from;
+        document.getElementById('incoming-call-box').style.display = 'block';
+    }
+    
+    if (peerConnection) {
+        // Если уже в звонке (был ответ answerCall) или мы инициатор
+        answerCall(data);
+    }
+}
+
+function handleSdpAnswer(data) {
+    if (peerConnection && peerConnection.remoteDescription === null) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    }
+}
+
+function handleIceCandidate(data) {
+    if (peerConnection) {
+        try {
+            if (peerConnection.remoteDescription) {
+                peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        } catch (e) {
+            console.error('Error adding received ICE candidate', e);
+        }
+    }
+}
+
+function handleCallEnd(data) {
+    if (data.from === callPartner) {
+        alert('Звонок завершен собеседником.');
+        endCall();
+    }
+}
+
+
+function addFriendToUI(nameWithStatus, rawName, avatarUrl = 'https://via.placeholder.com/150') {
     const list = document.getElementById('friends-list');
+    const existing = document.getElementById(`friend-${rawName}`);
+    if (existing) return;
+
     const div = document.createElement('div');
+    div.id = `friend-${rawName}`; 
     div.className = 'friend-item';
-    div.innerHTML = `<img src="${avatarUrl}" alt="${name}"><span>${name}</span>`;
-    div.onclick = () => openChat(name);
+    div.innerHTML = `<img src="${avatarUrl}" alt="${rawName}"><span>${nameWithStatus}</span>`;
+    div.onclick = () => openChat(rawName);
     list.appendChild(div);
+}
+
+function updateFriendStatus(username, isOnline) {
+    const friendElement = document.getElementById(`friend-${username}`);
+    if (friendElement) {
+        const span = friendElement.querySelector('span');
+        span.textContent = `${username} (${isOnline ? 'Online' : 'Offline'})`;
+    }
 }
 
 function openChat(username) {
@@ -80,14 +194,14 @@ function openChat(username) {
     document.querySelectorAll('.friend-item').forEach(el => el.classList.remove('active'));
     
     if (username !== 'general-demo') {
-        const friendElement = Array.from(document.querySelectorAll('.friend-item span')).find(span => span.textContent === username);
+        const friendElement = Array.from(document.querySelectorAll('.friend-item span')).find(span => span.textContent.startsWith(username));
         if (friendElement) {
              friendElement.closest('.friend-item').classList.add('active');
         }
     }
 }
 
-function toggleSettings() {
+window.toggleSettings = function() {
     const modal = document.getElementById('settings-modal');
     if (modal) {
         modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
@@ -127,9 +241,9 @@ function sendMessage() {
     if (!msg) return;
 
     if (currentChatUser === 'general-demo') {
-        socket.emit('demo_message', msg);
+        window.socket.emit('demo_message', msg);
     } else if (currentChatUser) {
-        socket.emit('chat_message', { toUser: currentChatUser, message: msg });
+        window.socket.emit('chat_message', { toUser: currentChatUser, message: msg });
     }
     input.value = '';
 }
@@ -146,26 +260,10 @@ function displayMessage(data, isDemo = false) {
     container.scrollTop = container.scrollHeight;
 }
 
-socket.on('receive_message', (data) => {
-    if (data.from === currentChatUser || data.isMe) {
-        displayMessage(data);
-    } 
-});
-
-socket.on('receive_demo_message', (data) => {
-    if (currentChatUser === 'general-demo') {
-        data.isMe = data.from === currentUser.username;
-        displayMessage(data, true);
-    }
-});
-
 // =========================================================================
 // 3. Friend Request Logic
 // =========================================================================
 
-/**
- * Отправляет запрос в друзья выбранному пользователю.
- */
 window.sendFriendRequest = function() {
     const target = document.getElementById('friend-req-input').value.trim();
     if (!target || target === currentUser.username) {
@@ -173,14 +271,11 @@ window.sendFriendRequest = function() {
         return;
     }
     
-    socket.emit('friend_request', target);
+    window.socket.emit('friend_request', target);
     alert(`Запрос в друзья отправлен пользователю: ${target}`);
     document.getElementById('friend-req-input').value = '';
 };
 
-/**
- * Рендерит список входящих запросов в модальном окне.
- */
 function renderFriendRequests() {
     const container = document.getElementById('friend-requests-list');
     container.innerHTML = '';
@@ -204,9 +299,6 @@ function renderFriendRequests() {
     });
 }
 
-/**
- * Открывает/закрывает модальное окно с запросами в друзья.
- */
 window.toggleRequestModal = function() {
     const modal = document.getElementById('requests-modal');
     if (modal.style.display === 'flex') {
@@ -217,16 +309,13 @@ window.toggleRequestModal = function() {
     }
 }
 
-/**
- * Обрабатывает принятие или отклонение запроса.
- */
 function handleFriendRequest(username, action) {
     if (action === 'accept') {
-        socket.emit('accept_friend', username);
-        addFriendToUI(username);
+        window.socket.emit('accept_friend', username);
+        addFriendToUI(`${username} (Online)`, username);
         alert(`Вы приняли запрос от ${username}.`);
     } else {
-        socket.emit('reject_friend', username);
+        window.socket.emit('reject_friend', username);
         alert(`Вы отклонили запрос от ${username}.`);
     }
 
@@ -234,20 +323,6 @@ function handleFriendRequest(username, action) {
     renderFriendRequests();
 }
 
-// --- Socket Listeners для запросов ---
-
-socket.on('new_friend_request', (data) => {
-    if (!friendRequests.find(req => req.from === data.from)) {
-        friendRequests.push(data);
-        alert(`Новый запрос в друзья от ${data.from}!`);
-        // В реальном приложении: добавить счетчик на кнопку запросов
-    }
-});
-
-socket.on('request_accepted', (data) => {
-    addFriendToUI(data.from);
-    alert(`${data.from} принял ваш запрос в друзья!`);
-});
 
 // =========================================================================
 // 4. WebRTC Implementation (Call Core)
@@ -267,11 +342,10 @@ async function startCall() {
         
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
-        socket.emit('sdp_offer', { to: currentChatUser, sdp: peerConnection.localDescription });
+        window.socket.emit('sdp_offer', { to: currentChatUser, sdp: peerConnection.localDescription });
 
         isCallActive = true;
         callPartner = currentChatUser;
-        socket.emit('call_attempt', currentChatUser); 
     } catch (err) {
         console.error("Ошибка доступа к медиа:", err);
         alert('Невозможно получить доступ к микрофону/камере. Проверьте разрешения.');
@@ -287,7 +361,6 @@ async function setupPeerConnection(targetUser) {
         const remoteVideo = document.getElementById('remote-video');
         const screenShareVideo = document.getElementById('screen-share-video');
         
-        // Определяем, является ли поток экраном
         const videoTracks = event.streams[0].getVideoTracks();
         if (videoTracks.length > 0 && videoTracks[0].label.includes('screen')) {
             screenShareVideo.srcObject = event.streams[0];
@@ -299,64 +372,45 @@ async function setupPeerConnection(targetUser) {
     
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-            socket.emit('ice_candidate', { to: targetUser, candidate: event.candidate });
+            window.socket.emit('ice_candidate', { to: targetUser, candidate: event.candidate });
         }
     };
 }
 
-async function answerCall() {
+// Принятие звонка (используется и для входящего звонка, и как ответ на offer)
+async function answerCall(data) {
     document.getElementById('incoming-call-box').style.display = 'none';
     isCallActive = true;
+    const targetUser = callPartner; // Имя собеседника
 
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (!localStream) {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (err) {
+            console.error("Ошибка доступа к медиа:", err);
+            alert('Невозможно получить доступ к микрофону/камере.');
+            rejectCall();
+            return;
+        }
+    }
         
-        document.getElementById('current-call-partner').innerText = callPartner;
-        document.getElementById('call-ui').style.display = 'flex';
-        document.getElementById('local-video').srcObject = localStream;
+    document.getElementById('current-call-partner').innerText = targetUser;
+    document.getElementById('call-ui').style.display = 'flex';
+    document.getElementById('local-video').srcObject = localStream;
         
-        await setupPeerConnection(callPartner);
-
-    } catch (err) {
-        console.error("Ошибка доступа к медиа:", err);
-        alert('Невозможно получить доступ к микрофону/камере.');
-        rejectCall();
+    if (!peerConnection) {
+        await setupPeerConnection(targetUser);
+    }
+    
+    if (data && data.sdp.type === 'offer') {
+        // Установка удаленного описания и отправка ответа (answer)
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        window.socket.emit('sdp_answer', { to: data.from, sdp: peerConnection.localDescription });
     }
 }
 
-socket.on('sdp_offer', async (data) => {
-    if (!peerConnection) {
-        callPartner = data.from;
-        await answerCall(); 
-    }
-
-    if (peerConnection) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        if (data.sdp.type === 'offer') {
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            socket.emit('sdp_answer', { to: data.from, sdp: peerConnection.localDescription });
-        }
-    }
-});
-
-socket.on('sdp_answer', async (data) => {
-    if (peerConnection && peerConnection.remoteDescription === null) {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-    }
-});
-
-socket.on('ice_candidate', async (data) => {
-    if (peerConnection) {
-        try {
-            if (peerConnection.remoteDescription) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-            }
-        } catch (e) {
-            console.error('Error adding received ICE candidate', e);
-        }
-    }
-});
 
 function endCall() {
     if (!isCallActive) return;
@@ -366,7 +420,7 @@ function endCall() {
     }
 
     if (callPartner) {
-        socket.emit('call_end', callPartner);
+        window.socket.emit('call_end', callPartner);
     }
 
     if (peerConnection) {
@@ -394,26 +448,20 @@ function endCall() {
     callPartner = null;
 }
 
-function rejectCall() {
+window.rejectCall = function() {
     document.getElementById('incoming-call-box').style.display = 'none';
     if (callPartner) {
-        socket.emit('call_end', callPartner); 
+        window.socket.emit('call_end', callPartner); 
     }
     callPartner = null;
 }
 
-socket.on('call_end', (data) => {
-    if (data.from === callPartner) {
-        alert('Звонок завершен собеседником.');
-        endCall();
-    }
-});
 
 // =========================================================================
 // 5. Media Controls (Mic, Cam, Screen Share)
 // =========================================================================
 
-function toggleMic() {
+window.toggleMic = function() {
     if (!localStream) return;
     const audioTrack = localStream.getAudioTracks()[0];
     const button = document.getElementById('mic-toggle');
@@ -424,7 +472,7 @@ function toggleMic() {
     }
 }
 
-function toggleCamera() {
+window.toggleCamera = function() {
     if (!localStream) return;
     const videoTrack = localStream.getVideoTracks()[0];
     const button = document.getElementById('camera-toggle');
@@ -435,7 +483,7 @@ function toggleCamera() {
     }
 }
 
-async function toggleScreenShare() {
+window.toggleScreenShare = async function() {
     if (!peerConnection) return;
 
     if (isSharingScreen) {
