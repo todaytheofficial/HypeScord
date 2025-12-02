@@ -91,6 +91,38 @@
         </div>
     </div>
 
+    
+    <div id="settings-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleSettings()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            <h2>Настройки</h2>
+            
+            <div class="setting-item">
+                <span>Текущая тема: </span>
+                <span id="current-theme-name">Темная</span>
+            </div>
+            <div class="setting-item">
+                <button id="theme-btn" onclick="toggleTheme()">Сменить на Светлую</button>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div id="requests-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="close-btn" onclick="toggleRequestModal()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+            <h2>Запросы в друзья</h2>
+            <div id="friend-requests-list">
+                </div>
+            
+            <hr style="margin: 20px 0;">
+            
+            <h3>Отправить запрос</h3>
+            <input type="text" id="friend-req-input" placeholder="Имя пользователя">
+            <button class="accept-btn" onclick="sendFriendRequest()" style="width: 100%; margin-top: 10px;">Отправить</lbutton>
+        </div>
+    </div>
+    
     <div id="incoming-call-box" class="modal-call-status" style="display: none;">
         <div class="modal-content">
             <h3>Входящий звонок от <span id="caller-name">...</span></h3>

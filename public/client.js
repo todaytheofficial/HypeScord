@@ -1,4 +1,4 @@
-// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с файлами и улучшенным WebRTC)
+// public/client.js (ФИНАЛЬНАЯ ВЕРСИЯ с файлами, WebRTC и исправлением UI ошибок)
 
 // Глобальные переменные
 var currentUser = null; 
@@ -43,6 +43,7 @@ window.onload = async () => {
         initApp();
         authScreen.style.display = 'none';
     } else {
+        // Ошибка 401: Пользователь не аутентифицирован - показываем экран входа
         authScreen.style.display = 'flex';
         showAuth('login'); 
     }
@@ -53,13 +54,12 @@ function initApp() {
     document.getElementById('current-username').innerText = currentUser.username;
     
     const userAvatarEl = document.getElementById('current-user-avatar');
-    userAvatarEl.src = currentUser.avatar || 'https://via.placeholder.com/150'; // Заглушка, если нет аватара
+    userAvatarEl.src = currentUser.avatar || 'https://via.placeholder.com/150'; 
     
     if (currentUser.username === 'Today_Idk') {
         userAvatarEl.classList.add('special-border');
     }
     
-    // Инициализация Socket.IO после аутентификации
     window.socket = io({ 
         query: { 
             userId: currentUser.id, 
@@ -70,7 +70,6 @@ function initApp() {
 }
 
 function setupSocketListeners() {
-    // --- Получение начальных данных (Друзья и Заявки) ---
     window.socket.on('initial_data', (data) => {
         const friendsList = document.getElementById('friends-list');
         friendsList.innerHTML = ''; 
@@ -81,7 +80,6 @@ function setupSocketListeners() {
         openChat('general-demo'); 
     });
 
-    // --- Message History ---
     window.socket.on('message_history', (data) => {
         const container = document.getElementById('messages-container');
         container.innerHTML = ''; 
@@ -91,7 +89,6 @@ function setupSocketListeners() {
         }
     });
 
-    // --- Message Logic (включая файлы) ---
     window.socket.on('receive_message', (data) => {
         if (data.from === currentChatUser || (data.isMe && data.from === currentUser.username)) {
             displayMessage(data);
@@ -105,7 +102,6 @@ function setupSocketListeners() {
         }
     });
 
-    // --- Friend Request Logic ---
     window.socket.on('new_friend_request', (data) => {
         if (!friendRequests.find(req => req.from === data.from)) {
             friendRequests.push(data);
@@ -182,7 +178,7 @@ window.openChat = function(username) {
     }
 }
 
-// --- Theme & Settings Logic ---
+// --- Theme & Settings Logic (Исправление ошибки client.js:194) ---
 function applyInitialTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.body.setAttribute('data-theme', savedTheme);
@@ -191,8 +187,16 @@ function applyInitialTheme() {
 
 function updateThemeUI(theme) {
     const isDark = theme === 'dark';
-    document.getElementById('current-theme-name').innerText = isDark ? 'Темная' : 'Светлая';
-    document.getElementById('theme-btn').innerText = isDark ? 'Сменить на Светлую' : 'Сменить на Темную';
+    // Проверка на наличие элементов, чтобы избежать TypeError: Cannot set properties of null
+    const themeNameEl = document.getElementById('current-theme-name');
+    const themeBtnEl = document.getElementById('theme-btn');
+    
+    if (themeNameEl) { 
+        themeNameEl.innerText = isDark ? 'Темная' : 'Светлая'; 
+    }
+    if (themeBtnEl) {
+        themeBtnEl.innerText = isDark ? 'Сменить на Светлую' : 'Сменить на Темную';
+    }
 }
 
 window.toggleTheme = function() {
@@ -234,7 +238,6 @@ window.sendFile = async (files) => {
 
     const file = files[0];
     
-    // Ограничение размера файла (5MB)
     if (file.size > 5 * 1024 * 1024) { 
         alert("Файл слишком большой. Максимальный размер 5MB.");
         document.getElementById('file-input').value = '';
@@ -245,7 +248,6 @@ window.sendFile = async (files) => {
     reader.onload = function(e) {
         const fileData = e.target.result;
         
-        // Отправляем файл через Socket.IO
         window.socket.emit('chat_message', { 
             toUser: currentChatUser, 
             file: {
@@ -255,7 +257,6 @@ window.sendFile = async (files) => {
             }
         });
         
-        // Очищаем поле файла после отправки
         document.getElementById('file-input').value = '';
     };
     reader.readAsDataURL(file);
@@ -275,11 +276,9 @@ function displayMessage(data, isDemo = false) {
     
     let contentHtml = '';
 
-    // Текстовое сообщение
     if (data.message) {
         contentHtml = data.message;
     } 
-    // Файл (фото/видео/аудио)
     else if (data.file && data.file.data) {
         const file = data.file;
         const mimeType = file.type.split('/')[0];
@@ -375,23 +374,18 @@ window.startCall = async function() {
     if (isCallActive || currentChatUser === 'general-demo' || isAwaitingAnswer) return;
 
     try {
-        // Запрос доступа к медиа
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         
-        // UI
         document.getElementById('current-call-partner').innerText = currentChatUser;
         document.getElementById('call-ui').style.display = 'flex';
         document.getElementById('local-video').srcObject = localStream;
 
-        // Создание PeerConnection
         await setupPeerConnection(currentChatUser);
         
-        // Отправка SDP offer
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         window.socket.emit('sdp_offer', { to: currentChatUser, sdp: peerConnection.localDescription });
 
-        // Устанавливаем состояние ожидания
         isAwaitingAnswer = true;
         callPartner = currentChatUser;
         document.getElementById('calling-name').innerText = currentChatUser;
@@ -400,7 +394,7 @@ window.startCall = async function() {
     } catch (err) {
         console.error("Ошибка доступа к медиа:", err);
         alert('Невозможно получить доступ к микрофону/камере. Проверьте разрешения.');
-        endCall(false); // Завершить локально без отправки endCall
+        endCall(false); 
     }
 }
 
@@ -410,7 +404,6 @@ async function setupPeerConnection(targetUser) {
     }
     peerConnection = new RTCPeerConnection(ICE_SERVERS);
     
-    // Добавляем треки только если localStream существует
     if (localStream) {
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     }
@@ -454,7 +447,6 @@ function handleSdpOffer(data) {
         document.getElementById('incoming-call-box').style.display = 'flex';
     }
     
-    // Если мы уже в звонке (используется для ответа/обмена треками), обрабатываем SDP
     if (peerConnection && !isAwaitingAnswer) { 
         answerCall(data);
     }
@@ -463,7 +455,6 @@ function handleSdpOffer(data) {
 function handleSdpAnswer(data) {
     if (peerConnection && peerConnection.remoteDescription === null) {
         peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        // Скрываем окно ожидания, так как звонок принят
         document.getElementById('awaiting-answer-box').style.display = 'none';
         isAwaitingAnswer = false;
         isCallActive = true;
@@ -484,8 +475,7 @@ function handleIceCandidate(data) {
 
 function handleCallEnd(data) {
     if (data.from === callPartner) {
-        // alert('Звонок завершен собеседником.');
-        endCall(false); // Завершить локально, не отправляя сигнал обратно
+        endCall(false); 
     }
 }
 
@@ -512,11 +502,8 @@ window.answerCall = async function(data) {
         await setupPeerConnection(targetUser);
     }
     
-    // Принимаем offer, если он был передан (в случае входящего звонка)
-    if (data && data.sdp && data.sdp.type === 'offer') {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
-    } else if (data && data.sdp) {
-         // Используем offer из сокета, если answerCall вызвана из handleSdpOffer
+    // Принимаем offer
+    if (data && data.sdp) {
          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
     }
     
@@ -526,7 +513,6 @@ window.answerCall = async function(data) {
 }
 
 
-/** Завершает звонок. sendSignal=true отправляет сигнал на сервер. */
 window.endCall = function(sendSignal = true, message = "Звонок завершен.") {
     if (!isCallActive && !isAwaitingAnswer) return;
 
@@ -548,7 +534,6 @@ window.endCall = function(sendSignal = true, message = "Звонок завер�
         localStream = null;
     }
 
-    // Сброс UI
     document.getElementById('call-ui').style.display = 'none';
     document.getElementById('incoming-call-box').style.display = 'none';
     document.getElementById('awaiting-answer-box').style.display = 'none'; 
@@ -560,7 +545,6 @@ window.endCall = function(sendSignal = true, message = "Звонок завер�
         if (el) el.srcObject = null;
     });
 
-    // Сброс состояний
     isCallActive = false;
     isAwaitingAnswer = false; 
     callPartner = null;
@@ -613,11 +597,9 @@ window.toggleScreenShare = async function() {
         stopScreenShare();
     } else {
         try {
-            // Запрос на захват экрана
             screenShareStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
             const screenTrack = screenShareStream.getVideoTracks()[0];
 
-            // Замена трека в PeerConnection
             const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
             if (sender) {
                 await sender.replaceTrack(screenTrack);
@@ -625,14 +607,12 @@ window.toggleScreenShare = async function() {
             
             document.getElementById('local-video').srcObject = screenShareStream;
 
-            // Обработка остановки демонстрации через UI браузера
             screenTrack.onended = () => {
                 if (isSharingScreen) {
                     stopScreenShare();
                 }
             };
 
-            // Показываем локальный индикатор демки
             document.getElementById('local-screen-indicator').style.display = 'flex';
 
             isSharingScreen = true;
@@ -653,12 +633,10 @@ function stopScreenShare() {
     const sender = peerConnection.getSenders().find(s => s.track.kind === 'video');
     const localVideoTrack = localStream.getVideoTracks()[0];
 
-    // Возвращаем исходный видео-трек
     if (sender && localVideoTrack) {
         sender.replaceTrack(localVideoTrack);
     }
     
-    // Остановка треков экрана
     if (screenShareStream) {
         screenShareStream.getTracks().forEach(track => track.stop());
         screenShareStream = null;
@@ -666,6 +644,6 @@ function stopScreenShare() {
 
     document.getElementById('local-video').srcObject = localStream;
     document.getElementById('screen-share-toggle').classList.remove('active');
-    document.getElementById('local-screen-indicator').style.display = 'none'; // Скрываем индикатор демки
+    document.getElementById('local-screen-indicator').style.display = 'none'; 
     isSharingScreen = false;
 }
